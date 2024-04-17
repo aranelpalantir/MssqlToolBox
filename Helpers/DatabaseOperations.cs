@@ -73,6 +73,7 @@ namespace MssqlToolBox.Helpers
                 INNER JOIN sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'SAMPLED') ips ON ix.object_id = ips.object_id AND ix.index_id = ips.index_id
                 WHERE ix.type_desc IN ('NONCLUSTERED', 'CLUSTERED')
                 AND t.is_ms_shipped = 0 
+                AND alloc_unit_type_desc='IN_ROW_DATA'
                 AND ix.name IS NOT NULL
                 AND ips.avg_fragmentation_in_percent>=@limit
                 ORDER BY Fragmentation DESC";

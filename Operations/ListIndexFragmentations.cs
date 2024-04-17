@@ -1,4 +1,5 @@
-﻿using MssqlToolBox.Helpers;
+﻿using Microsoft.VisualBasic;
+using MssqlToolBox.Helpers;
 
 namespace MssqlToolBox.Operations
 {
@@ -19,7 +20,11 @@ namespace MssqlToolBox.Operations
                 foreach (var indexName in indexFragmentations.Keys)
                 {
                     var indexFragmentation = indexFragmentations[indexName];
-                    if (indexFragmentation > 0)
+                    if (indexFragmentation is > 0 and <= 5)
+                    {
+                        ConsoleHelpers.WriteLineColoredMessage($"{count}. Index Name: {indexName}, Fragmentation: {indexFragmentation}", ConsoleColor.DarkYellow);
+                    }
+                    else if (indexFragmentation > 5)
                     {
                         ConsoleHelpers.WriteLineColoredMessage($"{count}. Index Name: {indexName}, Fragmentation: {indexFragmentation}", ConsoleColor.Red);
                     }
