@@ -36,8 +36,29 @@ namespace MssqlToolBox.Operations
                 }
             }
 
-            DatabaseOperations.ChangeRecoveryModel(Program.ConnectionString, databaseName, recoveryModel.Value);
-            ConsoleHelpers.WriteLineColoredMessage($"Recovery model of database '{databaseName}' has been changed to '{recoveryModel}'.", ConsoleColor.Green);
+            string confirmation;
+            do
+            {
+                ConsoleHelpers.WriteLineColoredMessage($"You are about to change the recovery model of database '{databaseName}' to '{recoveryModel}'.", ConsoleColor.DarkRed);
+                ConsoleHelpers.WriteLineColoredMessage("Do you want to continue? (Y/N)", ConsoleColor.DarkRed);
+                confirmation = Console.ReadLine()?.Trim().ToUpper();
+                if (confirmation == "Y")
+                {
+
+
+                    DatabaseOperations.ChangeRecoveryModel(Program.ConnectionString, databaseName, recoveryModel.Value);
+                    ConsoleHelpers.WriteLineColoredMessage($"Recovery model of database '{databaseName}' has been changed to '{recoveryModel}'.", ConsoleColor.Green);
+                }
+                else if (confirmation == "N")
+                {
+                    ConsoleHelpers.WriteLineColoredMessage("Index rebuild operation cancelled.", ConsoleColor.DarkYellow);
+                }
+                else
+                {
+                    ConsoleHelpers.WriteLineColoredMessage("Invalid input. Please enter y or n.", ConsoleColor.Red);
+                }
+            } while (confirmation != "Y" && confirmation != "N");
+
         }
     }
 }
