@@ -33,26 +33,28 @@ namespace MssqlToolBox.Helpers
         }
         private static readonly Dictionary<string, MenuOption> MenuOptions = new()
         {
-            { "1", new MenuOption("List Online Databases", _ => ListOnlineDatabases.Execute()) },
-            { "2", new MenuOption("List Offline Databases", _ => ListOfflineDatabases.Execute()) },
-            { "3", new MenuOption("List Recovery Models", _ =>ListRecoveryModels.Execute()) },
-            { "4", new MenuOption("Change Recovery Model", _ =>ChangeRecoveryModel.Execute()) },
-            { "5", new MenuOption("List Index Fragmentations", _ =>ListIndexFragmentations.Execute()) },
-            { "6", new MenuOption("Rebuild Indexes", type => IndexOperation.Execute(IndexOperation.OperationType.Rebuild)) },
-            { "7", new MenuOption("Reorganize Indexes", _ =>IndexOperation.Execute(IndexOperation.OperationType.Reorganize)) },
-            { "8", new MenuOption("Update Index Statistics", _ =>IndexOperation.Execute(IndexOperation.OperationType.UpdateStatistics)) },
-            { "9", new MenuOption("Index Optimization", _ =>IndexOperation.Execute(IndexOperation.OperationType.Optimization)) },
-            { "q", new MenuOption("Exit", _ => Environment.Exit(0)) }
+            { "1", new MenuOption(" List Online Databases", _ => ListOnlineDatabases.Execute()) },
+            { "2", new MenuOption(" List Offline Databases", _ => ListOfflineDatabases.Execute()) },
+            { "3", new MenuOption(" List Recovery Models", _ =>ListRecoveryModels.Execute()) },
+            { "4", new MenuOption(" Change Recovery Model", _ =>ChangeRecoveryModel.Execute()) },
+            { "5", new MenuOption(" List Index Fragmentations", _ =>ListIndexFragmentations.Execute()) },
+            { "6", new MenuOption(" Rebuild Indexes", type => IndexOperation.Execute(IndexOperation.OperationType.Rebuild)) },
+            { "7", new MenuOption(" Reorganize Indexes", _ =>IndexOperation.Execute(IndexOperation.OperationType.Reorganize)) },
+            { "8", new MenuOption(" Update Index Statistics", _ =>IndexOperation.Execute(IndexOperation.OperationType.UpdateStatistics)) },
+            { "9", new MenuOption(" Index Optimization", _ =>IndexOperation.Execute(IndexOperation.OperationType.Optimization)) },
+            { "10", new MenuOption("Top 10 Queries by Avg. CPU Time", _ => ShowTopQueries.Execute(DatabaseOperations.ShowTopQueriesSortBy.CpuTime)) },
+            { "11", new MenuOption("Top 10 Queries by Avg. Elapsed Time", _ => ShowTopQueries.Execute(DatabaseOperations.ShowTopQueriesSortBy.ElapsedTime)) },
+            { "q", new MenuOption(" Exit", _ => Environment.Exit(0)) }
         };
 
         private static void ShowMenu()
         {
             Console.Clear();
-            Console.WriteLine($"SQL Server: {Program.Server}");
-            Console.WriteLine("Menu:");
+            ConsoleHelpers.WriteLineColoredMessage($"SQL Server: {Program.Server}", ConsoleColor.DarkCyan);
+            ConsoleHelpers.WriteLineColoredMessage("Menu:", ConsoleColor.DarkYellow);
             foreach (var option in MenuOptions)
             {
-                Console.WriteLine($"{option.Key}- {option.Value.Description}");
+                ConsoleHelpers.WriteLineColoredMessage($"{option.Key}- {option.Value.Description}", ConsoleColor.Yellow);
             }
         }
 

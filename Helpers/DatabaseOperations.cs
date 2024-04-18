@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 using MssqlToolBox.Models;
+using System.Globalization;
 
 namespace MssqlToolBox.Helpers
 {
@@ -129,7 +130,45 @@ namespace MssqlToolBox.Helpers
         {
             ExecuteIndexOperation(databaseName, tableName, indexName, "UPDATE STATISTICS");
         }
-
+        public enum ShowTopQueriesSortBy
+        {
+            CpuTime,
+            ElapsedTime
+        }
+        public static DataTable ShowTopQueries(string databaseName, ShowTopQueriesSortBy sortBy)
+        {
+            var query = @"SELECT TOP 10 query_stats.query_hash AS Query_Hash,   
+            SUM(query_stats.total_worker_time) / SUM(query_stats.execution_count) AS Avg_CPU_Time, 
+	        SUM(query_stats.total_elapsed_time) / SUM(query_stats.execution_count) AS Avg_Elapsed_Time, 
+            MIN(query_stats.statement_text) AS Sample_Statement_Text,
+            MAX(last_execution_time) AS Last_Execution_Time,
+            MAX(last_elapsed_time) AS Last_Elapsed_Time,
+            SUM(execution_count) AS Total_Execution_Count
+             FROM   
+                (
+                    SELECT 
+                        QS.*,   
+                        SUBSTRING(ST.text, (QS.statement_start_offset/2) + 1,  
+                        ((CASE statement_end_offset   
+                            WHEN -1 THEN DATALENGTH(ST.text)  
+                            ELSE QS.statement_end_offset END   
+                                - QS.statement_start_offset)/2) + 1) AS statement_text  
+                     FROM sys.dm_exec_query_stats AS QS  
+                     CROSS APPLY sys.dm_exec_sql_text(QS.sql_handle) as ST
+                ) as query_stats  
+             GROUP BY 
+            query_stats.query_hash";
+            switch (sortBy)
+            {
+                case ShowTopQueriesSortBy.CpuTime:
+                    query += " ORDER BY 2 DESC;";
+                    break;
+                case ShowTopQueriesSortBy.ElapsedTime:
+                    query += " ORDER BY 3 DESC;";
+                    break;
+            }
+            return GetDataTable(query, dbName: databaseName);
+        }
         private static void ExecuteIndexOperation(string databaseName, string tableName, string indexName, string operation)
         {
             using var connection = new SqlConnection(Program.ConnectionString);
