@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using MssqlToolBox.Helpers;
+﻿using MssqlToolBox.Helpers;
 
 namespace MssqlToolBox.Operations
 {
@@ -8,8 +7,14 @@ namespace MssqlToolBox.Operations
         public static void Execute()
         {
             var databaseName = ConsoleHelpers.GetValidInput("Database Name (* for all databases): ", "Database Name cannot be empty. Please enter a valid Database name.");
+            var tableName = "*";
+            if (databaseName != "*")
+            {
+                tableName = ConsoleHelpers.GetValidInput("Table Name (* for all tables): ",
+                    "Table Name cannot be empty. Please enter a valid Table name.");
+            }
             var limit = int.Parse(ConsoleHelpers.GetValidInput("Fragmentation Limit (0 for all indexes): ", "Fragmentation Limit cannot be empty. Please enter a valid Fragmentation limit."));
-            var indexFragmentations = DatabaseOperations.GetIndexFragmentations(Program.ConnectionString, databaseName, limit);
+            var indexFragmentations = DatabaseOperations.GetIndexFragmentations(Program.ConnectionString, databaseName, tableName, limit);
             if (indexFragmentations.Count == 0)
             {
                 ConsoleHelpers.WriteLineColoredMessage($"There are no index fragmentations exceeding the specified limit of {limit}.", ConsoleColor.DarkYellow);
@@ -17,22 +22,15 @@ namespace MssqlToolBox.Operations
             else
             {
                 var count = 1;
-                foreach (var indexName in indexFragmentations.Keys)
+                foreach (var index in indexFragmentations)
                 {
-                    var indexFragmentation = indexFragmentations[indexName];
-                    if (indexFragmentation is > 0 and <= 5)
+                    var color = index.Fragmentation switch
                     {
-                        ConsoleHelpers.WriteLineColoredMessage($"{count}. Index Name: {indexName}, Fragmentation: {indexFragmentation}", ConsoleColor.DarkYellow);
-                    }
-                    else if (indexFragmentation > 5)
-                    {
-                        ConsoleHelpers.WriteLineColoredMessage($"{count}. Index Name: {indexName}, Fragmentation: {indexFragmentation}", ConsoleColor.Red);
-                    }
-                    else
-                    {
-                        ConsoleHelpers.WriteLineColoredMessage($"{count}. Index Name: {indexName}, Fragmentation: {indexFragmentation}", ConsoleColor.Green);
-                    }
-
+                        > 0 and <= 30 => ConsoleColor.DarkYellow,
+                        > 30 => ConsoleColor.Red,
+                        _ => ConsoleColor.Green
+                    };
+                    ConsoleHelpers.WriteLineColoredMessage($"{count}. Index Name: {index.Name}, Fragmentation: {index.Fragmentation}", color);
                     count++;
                 }
             }

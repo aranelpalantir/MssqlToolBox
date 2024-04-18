@@ -2,7 +2,7 @@
 
 namespace MssqlToolBox.Operations
 {
-    internal static class RebuildIndexes
+    internal static class ReorganizeIndexes
     {
         public static void Execute()
         {
@@ -17,7 +17,7 @@ namespace MssqlToolBox.Operations
             string confirmation;
             do
             {
-                ConsoleHelpers.WriteLineColoredMessage("Are you sure you want to rebuild indexes? (Y/N)", ConsoleColor.DarkRed);
+                ConsoleHelpers.WriteLineColoredMessage("Are you sure you want to reorganize indexes? (Y/N)", ConsoleColor.DarkRed);
                 confirmation = Console.ReadLine()?.Trim().ToUpper();
                 if (confirmation == "Y")
                 {
@@ -27,22 +27,22 @@ namespace MssqlToolBox.Operations
                     {
                         if (index.Fragmentation >= limit)
                         {
-                            DatabaseOperations.RebuildIndex(Program.ConnectionString, index.DatabaseName,
+                            DatabaseOperations.ReorganizeIndex(Program.ConnectionString, index.DatabaseName,
                                 index.TableName, index.Name);
                             var newFragmentation = DatabaseOperations.GetIndexFragmentation(Program.ConnectionString,
                                 index.DatabaseName, index.TableName, index.Name);
-                            ConsoleHelpers.WriteLineColoredMessage($"{index.DatabaseName} => {index.TableName}.{index.Name}: Index rebuild operation is OK. (Fragmentation: {index.Fragmentation} to {newFragmentation})", ConsoleColor.Green);
+                            ConsoleHelpers.WriteLineColoredMessage($"{index.DatabaseName}=>{index.TableName}.{index.Name}: Index reorganize operation is OK. (Fragmentation: {index.Fragmentation} to {newFragmentation})", ConsoleColor.Green);
                         }
                         else
                         {
-                            ConsoleHelpers.WriteLineColoredMessage($"{index.DatabaseName}=>{index.TableName}.{index.Name}: Index rebuild operation is not necessary. (Fragmentation: {index.Fragmentation})", ConsoleColor.DarkYellow);
+                            ConsoleHelpers.WriteLineColoredMessage($"{index.DatabaseName}=>{index.TableName}.{index.Name}: Index reorganize operation is not necessary. (Fragmentation: {index.Fragmentation})", ConsoleColor.DarkYellow);
                         }
                     }
-                    ConsoleHelpers.WriteLineColoredMessage("Index rebuild operation completed successfully.", ConsoleColor.Green);
+                    ConsoleHelpers.WriteLineColoredMessage("Index reorganize operation completed successfully.", ConsoleColor.Green);
                 }
                 else if (confirmation == "N")
                 {
-                    ConsoleHelpers.WriteLineColoredMessage("Index rebuild operation cancelled.", ConsoleColor.DarkYellow);
+                    ConsoleHelpers.WriteLineColoredMessage("Index reorganize operation cancelled.", ConsoleColor.DarkYellow);
                 }
                 else
                 {

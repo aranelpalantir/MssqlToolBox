@@ -38,7 +38,10 @@ namespace MssqlToolBox.Helpers
             { "3", new MenuOption("List Recovery Models", ListRecoveryModels.Execute) },
             { "4", new MenuOption("Change Recovery Model", ChangeRecoveryModel.Execute) },
             { "5", new MenuOption("List Index Fragmentations", ListIndexFragmentations.Execute) },
-            { "6", new MenuOption("Rebuild Indexes of All Online Databases (Fragmentation Limit:5)", RebuildIndexes.Execute) },
+            { "6", new MenuOption("Rebuild Indexes", RebuildIndexes.Execute) },
+            { "7", new MenuOption("Reorganize Indexes", ReorganizeIndexes.Execute) },
+            { "8", new MenuOption("Update Index Statistics", UpdateIndexStatistics.Execute) },
+            { "9", new MenuOption("Index Optimization", IndexOptimization.Execute) },
             { "q", new MenuOption("Exit", () => Environment.Exit(0)) }
         };
 

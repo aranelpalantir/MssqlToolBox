@@ -4,12 +4,16 @@ This utility tool provides a set of functionalities to manage and perform variou
 
 ## Features
 
-- **List Online Databases**: Displays the list of online databases on the specified SQL Server.
-- **List Offline Databases**: Displays the list of offline databases on the specified SQL Server.
-- **List Recovery Models**: Retrieves and displays the recovery models of databases.
-- **Change Recovery Model**: Allows changing the recovery model of a database.
-- **List Index Fragmentations**: Lists index fragmentations for databases, allowing you to identify areas for optimization.
-- **Rebuild Indexes**: Rebuilds indexes of all online databases, with an option to specify a fragmentation limit.
+- **List Online Databases**: Display the list of online databases on the specified SQL Server.
+- **List Offline Databases**: Display the list of offline databases on the specified SQL Server.
+- **List Recovery Models**: Retrieve and display the recovery models of databases.
+- **Change Recovery Model**: Allow changing the recovery model of a database.
+- **List Index Fragmentations**: List index fragmentations for databases, specific tables, or all tables within a database, allowing you to identify areas for optimization.
+- **Rebuild Indexes**: Rebuilds indexes for all tables in all online databases, a specific database, or a specific table, with the option to set a fragmentation limit.
+- **Reorganize Indexes**: Reorganize indexes for all tables in all online databases, a specific database, or a specific table, with the option to set a fragmentation limit.
+- **Update Index Statistics**: Updates index statistics for all tables in all online databases, a specific database, or a specific table.
+- **Index Optimization**: Optimizes indexes for all tables in all online databases, a specific database, or a specific table, with the option to set a fragmentation limit.
+- **Exit**: Exit the application.
 
 ## Getting Started
 
