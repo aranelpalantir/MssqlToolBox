@@ -18,7 +18,7 @@ namespace MssqlToolBox.Helpers
                     Console.Clear();
 
                     ExecuteMenuOption(choice);
-                   
+
                 }
                 catch (Exception ex)
                 {
@@ -33,16 +33,16 @@ namespace MssqlToolBox.Helpers
         }
         private static readonly Dictionary<string, MenuOption> MenuOptions = new()
         {
-            { "1", new MenuOption("List Online Databases", ListOnlineDatabases.Execute) },
-            { "2", new MenuOption("List Offline Databases", ListOfflineDatabases.Execute) },
-            { "3", new MenuOption("List Recovery Models", ListRecoveryModels.Execute) },
-            { "4", new MenuOption("Change Recovery Model", ChangeRecoveryModel.Execute) },
-            { "5", new MenuOption("List Index Fragmentations", ListIndexFragmentations.Execute) },
-            { "6", new MenuOption("Rebuild Indexes", RebuildIndexes.Execute) },
-            { "7", new MenuOption("Reorganize Indexes", ReorganizeIndexes.Execute) },
-            { "8", new MenuOption("Update Index Statistics", UpdateIndexStatistics.Execute) },
-            { "9", new MenuOption("Index Optimization", IndexOptimization.Execute) },
-            { "q", new MenuOption("Exit", () => Environment.Exit(0)) }
+            { "1", new MenuOption("List Online Databases", _ => ListOnlineDatabases.Execute()) },
+            { "2", new MenuOption("List Offline Databases", _ => ListOfflineDatabases.Execute()) },
+            { "3", new MenuOption("List Recovery Models", _ =>ListRecoveryModels.Execute()) },
+            { "4", new MenuOption("Change Recovery Model", _ =>ChangeRecoveryModel.Execute()) },
+            { "5", new MenuOption("List Index Fragmentations", _ =>ListIndexFragmentations.Execute()) },
+            { "6", new MenuOption("Rebuild Indexes", type => IndexOperation.Execute(IndexOperation.OperationType.Rebuild)) },
+            { "7", new MenuOption("Reorganize Indexes", _ =>IndexOperation.Execute(IndexOperation.OperationType.Reorganize)) },
+            { "8", new MenuOption("Update Index Statistics", _ =>IndexOperation.Execute(IndexOperation.OperationType.UpdateStatistics)) },
+            { "9", new MenuOption("Index Optimization", _ =>IndexOperation.Execute(IndexOperation.OperationType.Optimization)) },
+            { "q", new MenuOption("Exit", _ => Environment.Exit(0)) }
         };
 
         private static void ShowMenu()
@@ -56,21 +56,22 @@ namespace MssqlToolBox.Helpers
             }
         }
 
-        private static void ExecuteMenuOption(string choice)
+        private static void ExecuteMenuOption(string choice, object parameter = null)
         {
             if (MenuOptions.TryGetValue(choice, out var selectedOption))
             {
-                selectedOption.Action.Invoke();
+                selectedOption.Action.Invoke(parameter);
             }
             else
             {
                 ConsoleHelpers.WriteLineColoredMessage("Invalid choice. Please try again.", ConsoleColor.Red);
             }
         }
-        private sealed class MenuOption(string description, Action action)
+
+        private sealed class MenuOption(string description, Action<object> action)
         {
             public string Description { get; set; } = description;
-            public Action Action { get; } = action;
+            public Action<object> Action { get; } = action;
         }
     }
 }

@@ -35,6 +35,19 @@ namespace MssqlToolBox.Helpers
         {
             return GetDatabases(connectionString, false);
         }
+        public static List<string> GetTables(string connectionString, string databaseName)
+        {
+            var query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
+            var result = GetDataTable(connectionString, query, dbName: databaseName);
+
+            var tables = new List<string>();
+            foreach (DataRow row in result.Rows)
+            {
+                tables.Add(row["TABLE_NAME"].ToString());
+            }
+
+            return tables;
+        }
         public static Dictionary<string, string> GetRecoveryModels(string connectionString)
         {
             var recoveryModels = new Dictionary<string, string>();
@@ -140,6 +153,7 @@ namespace MssqlToolBox.Helpers
 
             return null;
         }
+        
         public static void RebuildIndex(string connectionString, string databaseName, string tableName, string indexName)
         {
             using var connection = new SqlConnection(connectionString);
