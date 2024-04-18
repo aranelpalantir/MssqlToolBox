@@ -6,7 +6,7 @@ namespace MssqlToolBox.Operations
     {
         public static void Execute()
         {
-            var databases = DatabaseOperations.GetOfflineDatabases(Program.ConnectionString);
+            var databases = DatabaseOperations.GetOfflineDatabases();
             if (databases.Count == 0)
             {
                 ConsoleHelpers.WriteLineColoredMessage("There are no offline databases available.", ConsoleColor.DarkYellow);

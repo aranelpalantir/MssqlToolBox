@@ -6,7 +6,7 @@ namespace MssqlToolBox.Operations
     {
         public static void Execute()
         {
-            var recoveryModels = DatabaseOperations.GetRecoveryModels(Program.ConnectionString);
+            var recoveryModels = DatabaseOperations.GetRecoveryModels();
             if (recoveryModels.Count == 0)
             {
                 ConsoleHelpers.WriteLineColoredMessage("There are no online databases available.", ConsoleColor.DarkYellow);

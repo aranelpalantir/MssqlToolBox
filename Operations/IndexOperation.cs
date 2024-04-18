@@ -29,7 +29,7 @@ namespace MssqlToolBox.Operations
             var databaseName = ConsoleHelpers.SelectDatabase();
             if (databaseName == null)
             {
-                ConsoleHelpers.WriteLineColoredMessage("Database selection cancelled or invalid. Index operation aborted.", ConsoleColor.DarkYellow);
+                ConsoleHelpers.WriteLineColoredMessage("Database selection cancelled or invalid. Operation aborted.", ConsoleColor.DarkYellow);
                 return;
             }
 
@@ -39,7 +39,7 @@ namespace MssqlToolBox.Operations
                 tableName = ConsoleHelpers.SelectTable(databaseName);
                 if (tableName == null)
                 {
-                    ConsoleHelpers.WriteLineColoredMessage("Table selection cancelled or invalid. Index operation aborted.", ConsoleColor.DarkYellow);
+                    ConsoleHelpers.WriteLineColoredMessage("Table selection cancelled or invalid. Operation aborted.", ConsoleColor.DarkYellow);
                     return;
                 }
             }
@@ -58,7 +58,7 @@ namespace MssqlToolBox.Operations
 
         private static void ExecuteIndexOperation(OperationType operationType, string databaseName, string tableName, int limit, string operationName)
         {
-            var indexes = DatabaseOperations.GetIndexFragmentations(Program.ConnectionString, databaseName, tableName);
+            var indexes = DatabaseOperations.GetIndexFragmentations(databaseName, tableName);
 
             foreach (var index in indexes)
             {
@@ -67,16 +67,11 @@ namespace MssqlToolBox.Operations
                     case OperationType.Rebuild or OperationType.Reorganize when index.Fragmentation >= limit:
                         {
                             if (operationType == OperationType.Rebuild)
-                                DatabaseOperations.RebuildIndex(Program.ConnectionString,
-                                    index.DatabaseName,
-                                    index.TableName, index.Name);
+                                DatabaseOperations.RebuildIndex(index.DatabaseName, index.TableName, index.Name);
                             else
-                                DatabaseOperations.ReorganizeIndex(Program.ConnectionString,
-                                    index.DatabaseName,
-                                    index.TableName, index.Name);
+                                DatabaseOperations.ReorganizeIndex(index.DatabaseName, index.TableName, index.Name);
 
-                            var newFragmentation = DatabaseOperations.GetIndexFragmentation(Program.ConnectionString,
-                                index.DatabaseName, index.TableName, index.Name);
+                            var newFragmentation = DatabaseOperations.GetIndexFragmentation(index.DatabaseName, index.TableName, index.Name);
                             ConsoleHelpers.WriteLineColoredMessage(
                                 $"{index.DatabaseName} => {index.TableName}.{index.Name}: Index {operationName} operation is OK. (Fragmentation: {index.Fragmentation} to {newFragmentation})",
                                 ConsoleColor.Green);
@@ -88,8 +83,7 @@ namespace MssqlToolBox.Operations
                             ConsoleColor.DarkYellow);
                         break;
                     case OperationType.UpdateStatistics:
-                        DatabaseOperations.UpdateStatistics(Program.ConnectionString, index.DatabaseName,
-                            index.TableName, index.Name);
+                        DatabaseOperations.UpdateStatistics(index.DatabaseName, index.TableName, index.Name);
 
                         ConsoleHelpers.WriteLineColoredMessage($"{index.DatabaseName}=>{index.TableName}.{index.Name}: Index {operationName} operation is OK.", ConsoleColor.Green);
                         break;
@@ -98,18 +92,14 @@ namespace MssqlToolBox.Operations
                             var indexOperation = false;
                             if (index.Fragmentation >= limit)
                             {
-                                DatabaseOperations.RebuildIndex(Program.ConnectionString, index.DatabaseName,
-                                    index.TableName, index.Name);
-                                DatabaseOperations.ReorganizeIndex(Program.ConnectionString, index.DatabaseName,
-                                    index.TableName, index.Name);
-                                var newFragmentation = DatabaseOperations.GetIndexFragmentation(Program.ConnectionString,
-                                    index.DatabaseName, index.TableName, index.Name);
+                                DatabaseOperations.RebuildIndex(index.DatabaseName, index.TableName, index.Name);
+                                DatabaseOperations.ReorganizeIndex(index.DatabaseName, index.TableName, index.Name);
+                                var newFragmentation = DatabaseOperations.GetIndexFragmentation(index.DatabaseName, index.TableName, index.Name);
                                 ConsoleHelpers.WriteLineColoredMessage($"{index.DatabaseName}=>{index.TableName}.{index.Name}: Index {operationName} is OK. (Fragmentation: {index.Fragmentation} to {newFragmentation})", ConsoleColor.Green);
                                 indexOperation = true;
                             }
 
-                            DatabaseOperations.UpdateStatistics(Program.ConnectionString, index.DatabaseName,
-                                index.TableName, index.Name);
+                            DatabaseOperations.UpdateStatistics(index.DatabaseName, index.TableName, index.Name);
 
                             if (!indexOperation)
                                 ConsoleHelpers.WriteLineColoredMessage($"{index.DatabaseName} => {index.TableName}.{index.Name}: Index rebuild, reorganize is not necessary. Only updated index statistics (Fragmentation: {index.Fragmentation})", ConsoleColor.DarkYellow);

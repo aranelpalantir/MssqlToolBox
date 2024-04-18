@@ -6,15 +6,25 @@ namespace MssqlToolBox.Operations
     {
         public static void Execute()
         {
-            var databaseName = ConsoleHelpers.GetValidInput("Database Name (* for all databases): ", "Database Name cannot be empty. Please enter a valid Database name.");
+            var databaseName = ConsoleHelpers.SelectDatabase();
+            if (databaseName == null)
+            {
+                ConsoleHelpers.WriteLineColoredMessage("Database selection cancelled or invalid. Operation aborted.", ConsoleColor.DarkYellow);
+                return;
+            }
+
             var tableName = "*";
             if (databaseName != "*")
             {
-                tableName = ConsoleHelpers.GetValidInput("Table Name (* for all tables): ",
-                    "Table Name cannot be empty. Please enter a valid Table name.");
+                tableName = ConsoleHelpers.SelectTable(databaseName);
+                if (tableName == null)
+                {
+                    ConsoleHelpers.WriteLineColoredMessage("Table selection cancelled or invalid. Operation aborted.", ConsoleColor.DarkYellow);
+                    return;
+                }
             }
             var limit = int.Parse(ConsoleHelpers.GetValidInput("Fragmentation Limit (0 for all indexes): ", "Fragmentation Limit cannot be empty. Please enter a valid Fragmentation limit."));
-            var indexFragmentations = DatabaseOperations.GetIndexFragmentations(Program.ConnectionString, databaseName, tableName, limit);
+            var indexFragmentations = DatabaseOperations.GetIndexFragmentations(databaseName, tableName, limit);
             if (indexFragmentations.Count == 0)
             {
                 ConsoleHelpers.WriteLineColoredMessage($"There are no index fragmentations exceeding the specified limit of {limit}.", ConsoleColor.DarkYellow);

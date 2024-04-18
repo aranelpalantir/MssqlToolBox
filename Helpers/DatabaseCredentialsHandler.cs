@@ -15,7 +15,7 @@
         {
             try
             {
-                if (DatabaseOperations.TestDatabaseConnection(Program.ConnectionString))
+                if (DatabaseOperations.TestDatabaseConnection())
                 {
                     ConsoleHelpers.WriteLineColoredMessage("Connected to the database successfully.", ConsoleColor.Green);
                     ConsoleHelpers.WriteLineColoredMessage("Please press any key to go to the menu", ConsoleColor.DarkGray);
@@ -34,10 +34,10 @@
         private static void GetDatabaseCredentials()
         {
             Program.Server = ConsoleHelpers.GetValidInput("SQL Server: ", "SQL Server name cannot be empty. Please enter a valid SQL Server name.");
-            Program.Username = ConsoleHelpers.GetValidInput("Username: ", "Username cannot be empty. Please enter a valid username.");
-            Program.Password = ConsoleHelpers.ReadPassword("Password: ", "Password cannot be empty. Please enter a valid password.");
+            var username = ConsoleHelpers.GetValidInput("Username: ", "Username cannot be empty. Please enter a valid username.");
+            var password = ConsoleHelpers.ReadPassword("Password: ", "Password cannot be empty. Please enter a valid password.");
 
-            Program.ConnectionString = $"Data Source={Program.Server};User ID={Program.Username};Password={Program.Password};TrustServerCertificate=true;";
+            Program.ConnectionString = $"Data Source={Program.Server};User ID={username};Password={password};TrustServerCertificate=true;";
         }
     }
 }

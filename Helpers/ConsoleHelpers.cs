@@ -99,14 +99,19 @@
 
         public static string? SelectTable(string databaseName)
         {
-            var availableTables = DatabaseOperations.GetTables(Program.ConnectionString, databaseName);
+            var availableTables = DatabaseOperations.GetTables(databaseName);
             return SelectItem("Table", availableTables);
         }
 
         public static string? SelectDatabase()
         {
-            var onlineDatabases = DatabaseOperations.GetOnlineDatabases(Program.ConnectionString);
+            var onlineDatabases = DatabaseOperations.GetOnlineDatabases();
             return SelectItem("Database", onlineDatabases);
+        }
+        public static string? SelectDatabaseWithRecoveryModel()
+        {
+            var onlineDatabasesWithRecoveryModels = DatabaseOperations.GetOnlineDatabasesWithRecoveryModels();
+            return SelectItem("Database", onlineDatabasesWithRecoveryModels);
         }
 
         private static string? SelectItem(string itemType, List<string> itemList)

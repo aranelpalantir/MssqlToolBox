@@ -6,64 +6,35 @@ namespace MssqlToolBox.Helpers
 {
     internal static class DatabaseOperations
     {
-        public static bool TestDatabaseConnection(string connectionString)
+        public static bool TestDatabaseConnection()
         {
-            using var connection = new SqlConnection(connectionString);
+            using var connection = new SqlConnection(Program.ConnectionString);
             connection.Open();
             return true;
         }
-        private static List<string> GetDatabases(string connectionString, bool online)
-        {
-            var query = "SELECT name FROM sys.databases WHERE name NOT IN ('master','model','msdb','tempdb') ";
-            query += online ? " AND state = 0" : " AND state <> 0";
-            query += " ORDER BY Name; ";
-            var result = GetDataTable(connectionString, query);
 
-            var databases = new List<string>();
-            foreach (DataRow row in result.Rows)
-            {
-                databases.Add(row["name"].ToString());
-            }
-
-            return databases;
-        }
-        public static List<string> GetOnlineDatabases(string connectionString)
+        public static List<string> GetOnlineDatabases()
         {
-            return GetDatabases(connectionString, true);
+            return GetDatabases(true).Select(r => r.Name).ToList();
         }
-        public static List<string> GetOfflineDatabases(string connectionString)
+        public static List<string> GetOfflineDatabases()
         {
-            return GetDatabases(connectionString, false);
+            return GetDatabases(false).Select(r => r.Name).ToList();
         }
-        public static List<string> GetTables(string connectionString, string databaseName)
+        public static List<string> GetOnlineDatabasesWithRecoveryModels()
+        {
+            return GetDatabases(true).Select(r => $"{r.Name} => {r.RecoveryModel}").ToList();
+        }
+        public static List<string> GetTables(string databaseName)
         {
             var query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
-            var result = GetDataTable(connectionString, query, dbName: databaseName);
+            var result = GetDataTable(query, dbName: databaseName);
 
-            var tables = new List<string>();
-            foreach (DataRow row in result.Rows)
-            {
-                tables.Add(row["TABLE_NAME"].ToString());
-            }
-
-            return tables;
+            return result.AsEnumerable().Select(row => row.Field<string>("TABLE_NAME")).ToList();
         }
-        public static Dictionary<string, string> GetRecoveryModels(string connectionString)
+        public static Dictionary<string, string> GetRecoveryModels()
         {
-            var recoveryModels = new Dictionary<string, string>();
-
-            var query = "SELECT name, recovery_model_desc FROM sys.databases WHERE name NOT IN ('master','model','msdb','tempdb') AND state = 0 ORDER BY Name";
-
-            var result = GetDataTable(connectionString, query);
-
-            foreach (DataRow row in result.Rows)
-            {
-                var dbName = row["name"].ToString();
-                var recoveryModel = row["recovery_model_desc"].ToString();
-                recoveryModels.Add(dbName, recoveryModel);
-            }
-
-            return recoveryModels;
+            return GetDatabases(true).ToDictionary(db => db.Name, db => db.RecoveryModel);
         }
         private const string IndexQuery = @"
                 SELECT  t.name AS TableName, ix.name AS IndexName, ips.avg_fragmentation_in_percent AS Fragmentation,ix.object_id,ix.index_id
@@ -74,15 +45,11 @@ namespace MssqlToolBox.Helpers
                 AND t.is_ms_shipped = 0 
                 AND alloc_unit_type_desc='IN_ROW_DATA'
                 AND ix.name IS NOT NULL";
-        public static List<IndexModel> GetIndexFragmentations(string connectionString, string databaseName, string tableName, int limit = 0)
+        public static List<IndexModel> GetIndexFragmentations(string databaseName, string tableName, int limit = 0)
         {
             var indexFragmantations = new List<IndexModel>();
 
-            var databases = new List<string>();
-            if (databaseName == "*")
-                databases = GetOnlineDatabases(connectionString);
-            else
-                databases.Add(databaseName);
+            var databases = (databaseName == "*") ? GetOnlineDatabases() : [databaseName];
 
             foreach (var dbName in databases)
             {
@@ -102,27 +69,25 @@ namespace MssqlToolBox.Helpers
                 if (tableName != "*")
                     parametersList.Add(new("@tableName", SqlDbType.NVarChar) { Value = tableName });
 
-                var result = GetDataTable(connectionString, query, parameters: [.. parametersList], dbName: dbName);
+                var result = GetDataTable(query, parameters: [.. parametersList], dbName: dbName);
 
-                foreach (DataRow row in result.Rows)
-                {
-                    indexFragmantations.Add(new IndexModel
-                    {
-                        DatabaseName = dbName,
-                        TableName = row["TableName"].ToString(),
-                        Name = row["IndexName"].ToString(),
-                        Fragmentation = Convert.ToDouble(row["Fragmentation"])
-                    });
-                }
+                indexFragmantations.AddRange(from DataRow row in result.Rows
+                                             select new IndexModel
+                                             {
+                                                 DatabaseName = dbName,
+                                                 TableName = row["TableName"].ToString(),
+                                                 Name = row["IndexName"].ToString(),
+                                                 Fragmentation = Convert.ToDouble(row["Fragmentation"])
+                                             });
             }
 
             return indexFragmantations;
         }
-        public static void ChangeRecoveryModel(string connectionString, string databaseName, RecoveryModel recoveryModel)
+        public static void ChangeRecoveryModel(string databaseName, RecoveryModel recoveryModel)
         {
             var recoveryModelStr = recoveryModel.ToString();
 
-            using var connection = new SqlConnection(connectionString);
+            using var connection = new SqlConnection(Program.ConnectionString);
             connection.Open();
 
             var sql = $"ALTER DATABASE [{databaseName}] SET RECOVERY {recoveryModelStr};";
@@ -136,64 +101,69 @@ namespace MssqlToolBox.Helpers
             Full,
             BULK_LOGGED
         }
-        public static double? GetIndexFragmentation(string connectionString, string databaseName, string tableName, string indexName)
+        public static double? GetIndexFragmentation(string databaseName, string tableName, string indexName)
         {
-            var query = IndexQuery;
-            query += " AND t.name=@tableName AND ix.name=@indexName";
-            var parametersList = new List<SqlParameter>
-                {
-                    new("@tableName", SqlDbType.NVarChar) { Value = tableName },
-                    new("@indexName", SqlDbType.NVarChar) { Value = indexName }
-                };
+            var query = IndexQuery + " AND t.name=@tableName AND ix.name=@indexName";
+            var parameters = new[]
+            {
+                new SqlParameter("@tableName", SqlDbType.NVarChar) { Value = tableName },
+                new SqlParameter("@indexName", SqlDbType.NVarChar) { Value = indexName }
+            };
 
-            var result = GetDataTable(connectionString, query, parameters: [.. parametersList], dbName: databaseName);
+            var result = GetDataTable(query, parameters, dbName: databaseName);
 
-            if (result.Rows.Count > 0)
-                return Convert.ToDouble(result.Rows[0]["Fragmentation"]);
-
-            return null;
+            return (result.Rows.Count > 0) ? Convert.ToDouble(result.Rows[0]["Fragmentation"]) : null;
         }
-        
-        public static void RebuildIndex(string connectionString, string databaseName, string tableName, string indexName)
+
+        public static void RebuildIndex(string databaseName, string tableName, string indexName)
         {
-            using var connection = new SqlConnection(connectionString);
+            ExecuteIndexOperation(databaseName, tableName, indexName, "REBUILD");
+        }
+
+        public static void ReorganizeIndex(string databaseName, string tableName, string indexName)
+        {
+            ExecuteIndexOperation(databaseName, tableName, indexName, "REORGANIZE");
+        }
+
+        public static void UpdateStatistics(string databaseName, string tableName, string indexName)
+        {
+            ExecuteIndexOperation(databaseName, tableName, indexName, "UPDATE STATISTICS");
+        }
+
+        private static void ExecuteIndexOperation(string databaseName, string tableName, string indexName, string operation)
+        {
+            using var connection = new SqlConnection(Program.ConnectionString);
             connection.Open();
             connection.ChangeDatabase(databaseName);
 
-            var sql = $"ALTER INDEX [{indexName}] ON [{tableName}] REBUILD;";
-
-            using var command = new SqlCommand(sql, connection);
-            command.ExecuteNonQuery();
-        }
-        public static void ReorganizeIndex(string connectionString, string databaseName, string tableName, string indexName)
-        {
-            using var connection = new SqlConnection(connectionString);
-            connection.Open();
-            connection.ChangeDatabase(databaseName);
-
-            var sql = $"ALTER INDEX [{indexName}] ON [{tableName}] REORGANIZE;";
-
-            using var command = new SqlCommand(sql, connection);
-            command.ExecuteNonQuery();
-        }
-        public static void UpdateStatistics(string connectionString, string databaseName, string tableName, string indexName)
-        {
-            using var connection = new SqlConnection(connectionString);
-            connection.Open();
-            connection.ChangeDatabase(databaseName);
-
-            var sql = $"UPDATE STATISTICS [{tableName}] [{indexName}];";
+            var sql = $"ALTER INDEX [{indexName}] ON [{tableName}] {operation};";
 
             using var command = new SqlCommand(sql, connection);
             command.ExecuteNonQuery();
         }
 
-        private static DataTable GetDataTable(string connectionString, string query,
+        private static List<DatabaseModel> GetDatabases(bool online)
+        {
+            var query = "SELECT name, recovery_model_desc FROM sys.databases WHERE name NOT IN ('master','model','msdb','tempdb') ";
+            query += online ? " AND state = 0" : " AND state <> 0";
+            query += " ORDER BY Name; ";
+
+            var result = GetDataTable(query);
+
+            return (from DataRow row in result.Rows
+                    select new DatabaseModel
+                    {
+                        Name = row["name"].ToString(),
+                        RecoveryModel = row["recovery_model_desc"].ToString()
+                    }).ToList();
+        }
+
+        private static DataTable GetDataTable(string query,
             SqlParameter[]? parameters = null, string? dbName = null)
         {
             var dataTable = new DataTable();
 
-            using var connection = new SqlConnection(connectionString);
+            using var connection = new SqlConnection(Program.ConnectionString);
             connection.Open();
 
             if (dbName != null)
