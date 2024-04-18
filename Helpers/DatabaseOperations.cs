@@ -1,7 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 using MssqlToolBox.Models;
-using System.Globalization;
 
 namespace MssqlToolBox.Helpers
 {
@@ -137,16 +136,18 @@ namespace MssqlToolBox.Helpers
         }
         public static DataTable ShowTopQueries(string databaseName, ShowTopQueriesSortBy sortBy)
         {
-            var query = @"SELECT TOP 10 query_stats.query_hash AS Query_Hash,   
+            var query = @"SELECT TOP 10 * FROM (SELECT query_stats.query_hash AS Query_Hash,   
             SUM(query_stats.total_worker_time) / SUM(query_stats.execution_count) AS Avg_CPU_Time, 
 	        SUM(query_stats.total_elapsed_time) / SUM(query_stats.execution_count) AS Avg_Elapsed_Time, 
             MIN(query_stats.statement_text) AS Sample_Statement_Text,
             MAX(last_execution_time) AS Last_Execution_Time,
             MAX(last_elapsed_time) AS Last_Elapsed_Time,
-            SUM(execution_count) AS Total_Execution_Count
+            SUM(execution_count) AS Total_Execution_Count,
+			db_name(CONVERT(SMALLINT, MIN(query_stats.database_id))) db_name
              FROM   
                 (
                     SELECT 
+					dep.value database_id,
                         QS.*,   
                         SUBSTRING(ST.text, (QS.statement_start_offset/2) + 1,  
                         ((CASE statement_end_offset   
@@ -155,9 +156,12 @@ namespace MssqlToolBox.Helpers
                                 - QS.statement_start_offset)/2) + 1) AS statement_text  
                      FROM sys.dm_exec_query_stats AS QS  
                      CROSS APPLY sys.dm_exec_sql_text(QS.sql_handle) as ST
+					 CROSS APPLY sys.dm_exec_plan_attributes(QS.plan_handle) dep
+					 WHERE dep.attribute = N'dbid'					
                 ) as query_stats  
              GROUP BY 
-            query_stats.query_hash";
+            query_stats.query_hash) as t1 WHERE db_name=@dbName";
+
             switch (sortBy)
             {
                 case ShowTopQueriesSortBy.CpuTime:
@@ -167,7 +171,52 @@ namespace MssqlToolBox.Helpers
                     query += " ORDER BY 3 DESC;";
                     break;
             }
-            return GetDataTable(query, dbName: databaseName);
+            var parameters = new[]
+            {
+                new SqlParameter("@dbName", SqlDbType.NVarChar) { Value = databaseName }
+            };
+            return GetDataTable(query, parameters);
+        }
+        public static DataTable ShowTopActiveQueries(string databaseName)
+        {
+            var query = @"SELECT TOP 10 * FROM (SELECT db_name(req.database_id) db_name,
+            c.client_net_address,
+            req.status,
+            req.command,
+            s.original_login_name,
+            s.login_time,
+            s.program_name,
+            s.client_interface_name,
+            req.session_id,
+            req.start_time,
+            req.cpu_time AS cpu_time_ms,            
+            REPLACE(
+                REPLACE(
+                    SUBSTRING(
+                        ST.text, (req.statement_start_offset / 2) + 1,
+                        ((CASE req.statement_end_offset
+                                WHEN -1 THEN DATALENGTH(ST.text)
+                                ELSE req.statement_end_offset
+                            END - req.statement_start_offset
+                            ) / 2
+                        ) + 1
+                    ), CHAR(10), ' '
+                ), CHAR(13), ' '
+            ) AS statement_text
+            FROM
+            sys.dm_exec_requests AS req
+            inner join sys.dm_exec_connections AS c on req.connection_id=c.connection_id  
+            inner JOIN sys.dm_exec_sessions AS s  
+            ON c.session_id = s.session_id 
+            CROSS APPLY sys.dm_exec_sql_text(req.sql_handle) AS ST
+            ) as t1 WHERE db_name=@dbName
+            ORDER BY cpu_time_ms DESC";
+
+            var parameters = new[]
+            {
+                new SqlParameter("@dbName", SqlDbType.NVarChar) { Value = databaseName }
+            };
+            return GetDataTable(query, parameters);
         }
         private static void ExecuteIndexOperation(string databaseName, string tableName, string indexName, string operation)
         {

@@ -42,7 +42,7 @@ namespace MssqlToolBox.Operations
                 }
                 else
                 {
-                    ConsoleHelpers.WriteLineColoredMessage("No query results found.", ConsoleColor.Yellow);
+                    ConsoleHelpers.WriteLineColoredMessage($"No query results found for {dbName}.", ConsoleColor.Yellow);
                 }
                 ConsoleHelpers.WriteLineColoredMessage("---", ConsoleColor.Yellow);
             }
