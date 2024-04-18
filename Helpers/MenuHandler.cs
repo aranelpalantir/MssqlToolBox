@@ -44,6 +44,7 @@ namespace MssqlToolBox.Helpers
             { "9", new MenuOption(" Index Optimization", _ =>IndexOperation.Execute(IndexOperation.OperationType.Optimization)) },
             { "10", new MenuOption("Top 10 Queries by Avg. CPU Time", _ => ShowTopQueries.Execute(DatabaseOperations.ShowTopQueriesSortBy.CpuTime)) },
             { "11", new MenuOption("Top 10 Queries by Avg. Elapsed Time", _ => ShowTopQueries.Execute(DatabaseOperations.ShowTopQueriesSortBy.ElapsedTime)) },
+            { "12", new MenuOption("Top 10 Active Queries by CPU Time", _ => ShowTopActiveQueries.Execute()) },
             { "q", new MenuOption(" Exit", _ => Environment.Exit(0)) }
         };
 
