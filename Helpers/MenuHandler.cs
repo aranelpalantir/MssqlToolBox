@@ -46,6 +46,7 @@ namespace MssqlToolBox.Helpers
             { "10", new MenuOption("Top 10 Queries by Avg. CPU Time", _ => ShowTopQueries.Execute(DatabaseOperations.ShowTopQueriesSortBy.CpuTime)) },
             { "11", new MenuOption("Top 10 Queries by Avg. Elapsed Time", _ => ShowTopQueries.Execute(DatabaseOperations.ShowTopQueriesSortBy.ElapsedTime)) },
             { "12", new MenuOption("Top 10 Active Queries by CPU Time", _ => ShowTopActiveQueries.Execute()) },
+            { "13", new MenuOption("Top 10 Missing Indexes by Improvement Measure", _ => ListMissingIndexes.Execute()) },
             { "q", new MenuOption(" Exit", _ => Environment.Exit(0)) }
         };
         private static void ShowServerStatus(ServerStatusModel serverStatusModel)
