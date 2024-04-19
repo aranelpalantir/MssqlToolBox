@@ -18,6 +18,23 @@ This utility tool provides a set of functionalities to manage and perform variou
 - **Top 10 Active Queries by CPU Time**: Display the top 10 active queries based on CPU time.
 - **Exit**: Exit the application.
 
+## Server Status
+
+The following information about the server status is displayed:
+
+- **RAM Size**: Total RAM size in MB.
+- **Used RAM**: Amount of RAM used in MB.
+- **Free RAM**: Amount of free RAM in MB.
+- **RAM Usage Percentage**: Percentage of RAM usage.
+- **SQL Server Start Time**: Time when the SQL Server instance was started.
+
+## Drive Information
+
+The utility provides information about available drives and their free space:
+
+- **Drive Letter**: Drive letter.
+- **Free Space**: Amount of free space on the drive in MB.
+
 ## Getting Started
 
 To use this tool, you need to provide the SQL Server credentials including the server name, username, and password. The tool connects to the SQL Server using the provided credentials and allows you to perform various database operations.

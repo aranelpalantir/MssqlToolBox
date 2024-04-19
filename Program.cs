@@ -8,7 +8,10 @@ namespace MssqlToolBox
 
         static void Main(string[] args)
         {
-            ConsoleHelpers.WriteLineColoredMessage("Welcome to Microsoft SQL Server Tool Box Utility!", ConsoleColor.DarkGreen);
+            ConsoleHelpers.WriteLineColoredMessage("===== Microsoft SQL Server Tool Box Utility =====", ConsoleColor.DarkGreen);
+            Console.WriteLine("");
+            ConsoleHelpers.WriteLineColoredMessage("Please enter the database credentials:", ConsoleColor.DarkYellow);
+            Console.WriteLine("");
 
             DatabaseCredentialsHandler.Handle();
 

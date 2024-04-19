@@ -1,6 +1,8 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 using MssqlToolBox.Models;
+using System;
+using DriveInfo = MssqlToolBox.Models.DriveInfo;
 
 namespace MssqlToolBox.Helpers
 {
@@ -229,6 +231,46 @@ namespace MssqlToolBox.Helpers
             using var command = new SqlCommand(sql, connection);
             command.ExecuteNonQuery();
         }
+        public static ServerStatusModel GetServerStatus()
+        {
+            ServerStatusModel serverStatusModel = new();
+            var query = @"
+        SELECT 
+            total_physical_memory_kb / 1024 AS Ram_Size_MB,
+            (total_physical_memory_kb - available_physical_memory_kb) / 1024 AS Used_Ram_Size_MB,
+            available_physical_memory_kb / 1024 AS Free_Ram_Size_MB,
+            100 - (CAST(available_physical_memory_kb AS FLOAT) / CAST(total_physical_memory_kb AS FLOAT)) * 100 AS Ram_Usage_Percentage,
+            sqlserver_start_time AS Sql_Server_Start_Time
+        FROM 
+            sys.dm_os_sys_memory
+        CROSS JOIN 
+            sys.dm_os_sys_info;
+"
+                ;
+            var memoryInfo = GetDataTable(query);
+
+            var row = memoryInfo.Rows[0];
+            serverStatusModel.RamSizeMB = (long)row["Ram_Size_MB"];
+            serverStatusModel.UsedRamSizeMB = (long)row["Used_Ram_Size_MB"];
+            serverStatusModel.FreeRamSizeMB = (long)row["Free_Ram_Size_MB"];
+            serverStatusModel.RamUsagePercentage = Math.Round((double)row["Ram_Usage_Percentage"], 2);
+            serverStatusModel.SqlServerStartTime = (DateTime)row["Sql_Server_Start_Time"];
+
+            var driveInfos = GetDataTable("EXEC xp_fixeddrives;");
+            serverStatusModel.DriveInfos = new();
+            foreach (DataRow driveInfo in driveInfos.Rows)
+            {
+                serverStatusModel.DriveInfos.Add(
+                    new DriveInfo
+                    {
+                        DriveLetter = (string)driveInfo["drive"],
+                        FreeSpaceMB = (int)driveInfo["MB free"]
+                    });
+            }
+
+            return serverStatusModel;
+        }
+
 
         private static List<DatabaseModel> GetDatabases(bool online)
         {

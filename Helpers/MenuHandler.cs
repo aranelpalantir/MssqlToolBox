@@ -1,4 +1,5 @@
-﻿using MssqlToolBox.Operations;
+﻿using MssqlToolBox.Models;
+using MssqlToolBox.Operations;
 
 namespace MssqlToolBox.Helpers
 {
@@ -47,11 +48,38 @@ namespace MssqlToolBox.Helpers
             { "12", new MenuOption("Top 10 Active Queries by CPU Time", _ => ShowTopActiveQueries.Execute()) },
             { "q", new MenuOption(" Exit", _ => Environment.Exit(0)) }
         };
+        private static void ShowServerStatus(ServerStatusModel serverStatusModel)
+        {
+            ConsoleHelpers.WriteLineColoredMessage("Status", ConsoleColor.Cyan);
+            ConsoleHelpers.WriteLineColoredMessage("-------------", ConsoleColor.Gray);
+            ConsoleHelpers.WriteColoredMessage($"RAM Size: {serverStatusModel.RamSizeMB} MB  ", ConsoleColor.DarkYellow);
+            ConsoleHelpers.WriteColoredMessage($"Used RAM: {serverStatusModel.UsedRamSizeMB} MB  ", ConsoleColor.Yellow);
+            ConsoleHelpers.WriteColoredMessage($"Free RAM: {serverStatusModel.FreeRamSizeMB} MB  ", ConsoleColor.Green);
+            ConsoleHelpers.WriteLineColoredMessage($"RAM Usage Percentage: {serverStatusModel.RamUsagePercentage}%", ConsoleColor.Blue);
+            ConsoleHelpers.WriteLineColoredMessage($"SQL Server Start Time: {serverStatusModel.SqlServerStartTime}", ConsoleColor.Magenta);
+        }
 
+        private static void ShowDriveInformation(List<Models.DriveInfo> driveInfos)
+        {
+            ConsoleHelpers.WriteLineColoredMessage("\nDrive Information", ConsoleColor.Cyan);
+            ConsoleHelpers.WriteLineColoredMessage("-------------", ConsoleColor.Gray);
+            foreach (var driveInfo in driveInfos)
+            {
+                ConsoleHelpers.WriteColoredMessage($"Drive: {driveInfo.DriveLetter}, Free Space: {driveInfo.FreeSpaceMB} MB  ", ConsoleColor.DarkCyan);
+            }
+
+            Console.WriteLine("");
+        }
         private static void ShowMenu()
         {
             Console.Clear();
             ConsoleHelpers.WriteLineColoredMessage($"SQL Server: {Program.Server}", ConsoleColor.DarkCyan);
+
+            var serverStatusModel = DatabaseOperations.GetServerStatus();
+            ShowServerStatus(serverStatusModel);
+            ShowDriveInformation(serverStatusModel.DriveInfos);
+
+            ConsoleHelpers.WriteLineColoredMessage("-------------", ConsoleColor.Gray);
             ConsoleHelpers.WriteLineColoredMessage("Menu:", ConsoleColor.DarkYellow);
             foreach (var option in MenuOptions)
             {
