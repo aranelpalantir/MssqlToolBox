@@ -4,6 +4,7 @@ namespace MssqlToolBox.Helpers
 {
     using System;
     using System.Collections.Generic;
+    using System.Text.Json;
 
     internal class CredentialManager
     {
@@ -11,11 +12,12 @@ namespace MssqlToolBox.Helpers
         private static CredentialManager? _instance;
         private readonly Dictionary<string, DatabaseConnectionInfo> _connections;
         private DatabaseConnectionInfo? _activeConnection;
+        private string? _masterKey;
+        private const string ConnectionsFileName = "connections";
 
         private CredentialManager()
         {
             _connections = new Dictionary<string, DatabaseConnectionInfo>();
-            _activeConnection = null;
         }
 
         public static CredentialManager Instance
@@ -38,6 +40,8 @@ namespace MssqlToolBox.Helpers
             lock (Lock)
             {
                 _connections[name] = connection;
+                if (IsSetMasterKey())
+                    SaveConnectionsToFile();
             }
         }
 
@@ -87,6 +91,58 @@ namespace MssqlToolBox.Helpers
             {
                 _activeConnection = connection;
             }
+        }
+        private void SaveConnectionsToFile()
+        {
+            try
+            {
+                var jsonData = JsonSerializer.Serialize(_connections);
+
+                var encryptedData = EncryptionHelper.EncryptString(jsonData, _masterKey);
+
+                File.WriteAllText(ConnectionsFileName, encryptedData);
+            }
+            catch
+            {
+                lock (Lock)
+                {
+                    _connections.Clear();
+                }
+                throw;
+            }
+        }
+
+        public void LoadConnectionsFromFile()
+        {
+            if (!IsConnectionFileExists())
+                return;
+            var encryptedData = File.ReadAllText(ConnectionsFileName);
+            var decryptedData = EncryptionHelper.DecryptString(encryptedData, _masterKey);
+            var connections = JsonSerializer.Deserialize<Dictionary<string, DatabaseConnectionInfo>>(decryptedData);
+
+            foreach (var connection in connections)
+            {
+                _connections[connection.Key] = connection.Value;
+            }
+        }
+
+        public void SetMasterKey(string? masterKey)
+        {
+            lock (Lock)
+            {
+                _masterKey = masterKey;
+            }
+        }
+        public bool IsSetMasterKey()
+        {
+            lock (Lock)
+            {
+                return _masterKey != null;
+            }
+        }
+        public bool IsConnectionFileExists()
+        {
+            return File.Exists(ConnectionsFileName);
         }
     }
 

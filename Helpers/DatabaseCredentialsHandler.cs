@@ -6,8 +6,27 @@ namespace MssqlToolBox.Helpers
     {
         public static void Handle()
         {
+            Console.Clear();
             ConsoleHelpers.WriteLineColoredMessage("===== Microsoft SQL Server Tool Box Utility =====", ConsoleColor.DarkGreen);
             Console.WriteLine("");
+
+            if (CredentialManager.Instance.IsConnectionFileExists() && !CredentialManager.Instance.IsSetMasterKey())
+            {
+                string choice;
+                while (true)
+                {
+                    choice = ConsoleHelpers.GetValidInput(
+                        "Connections file found. Would you like to load connections from this file? (Y/N): ",
+                        "Please enter Y or N.");
+                    if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
+                        break;
+                }
+
+                if (choice.ToUpper() == "Y")
+                {
+                    LoadConnectionsFromFile();
+                }
+            }
 
             GetDatabaseCredentials();
 
@@ -45,7 +64,7 @@ namespace MssqlToolBox.Helpers
                     while (true)
                     {
                         choice = ConsoleHelpers.GetValidInput(
-                            "Would you like to use an existing connection (Y) or enter new credentials (N)? ",
+                            "Would you like to use an existing connection (Y) or enter new credentials (N)?: ",
                             "Please enter Y or N.");
                         if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
                             break;
@@ -120,11 +139,67 @@ namespace MssqlToolBox.Helpers
 
             if (choice.ToUpper() == "Y")
             {
-                var defaultConnectionName = $"{connection.Server}_{connection.Username}";
-                var connectionName = ConsoleHelpers.GetValidInputWithDefaultInput($"Enter a name for this connection (Default: {defaultConnectionName}): ", defaultConnectionName);
-                CredentialManager.Instance.AddConnection(connectionName, connection);
+                try
+                {
+                    if (!CredentialManager.Instance.IsSetMasterKey())
+                        GetMasterKey();
+
+                    var defaultConnectionName = $"{connection.Server}_{connection.Username}";
+                    var connectionName = ConsoleHelpers.GetValidInputWithDefaultInput($"Enter a name for this connection (Default: {defaultConnectionName}): ", defaultConnectionName);
+                    CredentialManager.Instance.AddConnection(connectionName, connection);
+                }
+                catch 
+                {
+                    ConsoleHelpers.WriteLineColoredMessage("The connections file cannot be written properly. The master key may not be valid. Please enter a 16-character master key!", ConsoleColor.Red);
+                    CredentialManager.Instance.SetMasterKey(null);
+                    ConfirmSaveDatabaseCredentials(connection);
+                }
+               
             }
         }
 
+        public static void LoadConnectionsFromFile()
+        {
+            try
+            {
+                if (!CredentialManager.Instance.IsConnectionFileExists())
+                {
+                    ConsoleHelpers.WriteLineColoredMessage("Connections file not found.", ConsoleColor.DarkYellow);
+                    return;
+                }
+
+                GetMasterKey();
+
+                CredentialManager.Instance.LoadConnectionsFromFile();
+
+                Handle();
+            }
+            catch
+            {
+                ConsoleHelpers.WriteLineColoredMessage("The connections file cannot be read properly. It may be corrupt or the master key may be incorrect!", ConsoleColor.Red);
+                CredentialManager.Instance.SetMasterKey(null);
+                string choice;
+                while (true)
+                {
+                    choice = ConsoleHelpers.GetValidInput(
+                        "Would you like to try again? (Y/N): ",
+                        "Please enter Y or N.");
+                    if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
+                        break;
+                }
+
+                if (choice.ToUpper() == "Y")
+                {
+                    LoadConnectionsFromFile();
+                }
+            }
+        }
+
+        public static void GetMasterKey()
+        {
+            var masterKey = ConsoleHelpers.ReadPassword("Master Key: ",
+                "The master key cannot be empty. Please enter a valid password.");
+            CredentialManager.Instance.SetMasterKey(masterKey);
+        }
     }
 }

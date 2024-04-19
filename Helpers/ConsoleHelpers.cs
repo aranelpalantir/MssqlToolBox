@@ -30,6 +30,7 @@
 
             return input;
         }
+
         public static string ReadPassword(string prompt, string errorMessage)
         {
             string password;
