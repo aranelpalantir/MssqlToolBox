@@ -1,4 +1,6 @@
 ﻿using MssqlToolBox.Helpers;
+using System;
+using static MssqlToolBox.Helpers.DatabaseOperations;
 
 namespace MssqlToolBox.Operations
 {
@@ -24,25 +26,36 @@ namespace MssqlToolBox.Operations
                 }
             }
             var limit = int.Parse(ConsoleHelpers.GetValidInput("Fragmentation Limit (0 for all indexes): ", "Fragmentation Limit cannot be empty. Please enter a valid Fragmentation limit."));
-            var indexFragmentations = DatabaseOperations.GetIndexFragmentations(databaseName, tableName, limit);
-            if (indexFragmentations.Count == 0)
-            {
-                ConsoleHelpers.WriteLineColoredMessage($"There are no index fragmentations exceeding the specified limit of {limit}.", ConsoleColor.DarkYellow);
-            }
+            
+            var databases = new List<string>();
+            if (databaseName == "*")
+                databases = DatabaseOperations.GetOnlineDatabases();
             else
+                databases.Add(databaseName);
+
+            foreach (var dbName in databases)
             {
-                var count = 1;
-                foreach (var index in indexFragmentations)
+                var indexFragmentations = DatabaseOperations.GetIndexFragmentations(dbName, tableName, limit);
+                if (indexFragmentations.Count == 0)
                 {
-                    var color = index.Fragmentation switch
-                    {
-                        > 0 and <= 30 => ConsoleColor.DarkYellow,
-                        > 30 => ConsoleColor.Red,
-                        _ => ConsoleColor.Green
-                    };
-                    ConsoleHelpers.WriteLineColoredMessage($"{count}. Index Name: {index.Name}, Fragmentation: {index.Fragmentation}", color);
-                    count++;
+                    ConsoleHelpers.WriteLineColoredMessage($"Database Name: {dbName} =>There are no index fragmentations exceeding the specified limit of {limit}.", ConsoleColor.DarkYellow);
                 }
+                else
+                {
+                    var count = 1;
+                    foreach (var index in indexFragmentations)
+                    {
+                        var color = index.Fragmentation switch
+                        {
+                            > 0 and <= 30 => ConsoleColor.DarkYellow,
+                            > 30 => ConsoleColor.Red,
+                            _ => ConsoleColor.Green
+                        };
+                        ConsoleHelpers.WriteLineColoredMessage($"{count}. Database Name: {index.DatabaseName} => Index Name: {index.Name}, Fragmentation: {index.Fragmentation}", color);
+                        count++;
+                    }
+                }
+                ConsoleHelpers.WriteLineColoredMessage("-------------", ConsoleColor.Gray);
             }
         }
     }

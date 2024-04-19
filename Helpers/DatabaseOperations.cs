@@ -45,41 +45,38 @@ namespace MssqlToolBox.Helpers
                 AND t.is_ms_shipped = 0 
                 AND alloc_unit_type_desc='IN_ROW_DATA'
                 AND ix.name IS NOT NULL";
+
         public static List<IndexModel> GetIndexFragmentations(string databaseName, string tableName, int limit = 0)
         {
             var indexFragmantations = new List<IndexModel>();
 
-            var databases = (databaseName == "*") ? GetOnlineDatabases() : [databaseName];
+            var query = IndexQuery;
+            query += " AND ips.avg_fragmentation_in_percent>=@limit";
 
-            foreach (var dbName in databases)
-            {
-                var query = IndexQuery;
-                query += " AND ips.avg_fragmentation_in_percent>=@limit";
+            if (tableName != "*")
+                query += " AND t.name=@tableName";
 
-                if (tableName != "*")
-                    query += " AND t.name=@tableName";
+            query += " ORDER BY Fragmentation DESC";
 
-                query += " ORDER BY Fragmentation DESC";
-
-                var parametersList = new List<SqlParameter>
+            var parametersList = new List<SqlParameter>
                 {
                     new("@limit", SqlDbType.Int) { Value = limit }
                 };
 
-                if (tableName != "*")
-                    parametersList.Add(new("@tableName", SqlDbType.NVarChar) { Value = tableName });
+            if (tableName != "*")
+                parametersList.Add(new("@tableName", SqlDbType.NVarChar) { Value = tableName });
 
-                var result = GetDataTable(query, parameters: [.. parametersList], dbName: dbName);
+            var result = GetDataTable(query, parameters: [.. parametersList], dbName: databaseName);
 
-                indexFragmantations.AddRange(from DataRow row in result.Rows
-                                             select new IndexModel
-                                             {
-                                                 DatabaseName = dbName,
-                                                 TableName = row["TableName"].ToString(),
-                                                 Name = row["IndexName"].ToString(),
-                                                 Fragmentation = Convert.ToDouble(row["Fragmentation"])
-                                             });
-            }
+            indexFragmantations.AddRange(from DataRow row in result.Rows
+                                         select new IndexModel
+                                         {
+                                             DatabaseName = databaseName,
+                                             TableName = row["TableName"].ToString(),
+                                             Name = row["IndexName"].ToString(),
+                                             Fragmentation = Convert.ToDouble(row["Fragmentation"])
+                                         });
+
 
             return indexFragmantations;
         }
@@ -124,11 +121,7 @@ namespace MssqlToolBox.Helpers
         {
             ExecuteIndexOperation(databaseName, tableName, indexName, "REORGANIZE");
         }
-
-        public static void UpdateStatistics(string databaseName, string tableName, string indexName)
-        {
-            ExecuteIndexOperation(databaseName, tableName, indexName, "UPDATE STATISTICS");
-        }
+        
         public enum ShowTopQueriesSortBy
         {
             CpuTime,
@@ -225,6 +218,17 @@ namespace MssqlToolBox.Helpers
             connection.ChangeDatabase(databaseName);
 
             var sql = $"ALTER INDEX [{indexName}] ON [{tableName}] {operation};";
+
+            using var command = new SqlCommand(sql, connection);
+            command.ExecuteNonQuery();
+        }
+        public static void UpdateStatistics(string databaseName, string tableName, string indexName)
+        {
+            using var connection = new SqlConnection(CredentialManager.Instance.GetActiveConnection().ConnectionString);
+            connection.Open();
+            connection.ChangeDatabase(databaseName);
+
+            var sql = $"UPDATE STATISTICS [{tableName}] [{indexName}];";
 
             using var command = new SqlCommand(sql, connection);
             command.ExecuteNonQuery();
