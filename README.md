@@ -1,6 +1,6 @@
 # Microsoft SQL Server Tool Box Utility
 
-This utility tool provides a set of functionalities to manage and perform various tasks on Microsoft SQL Server databases.
+This utility tool provides a set of functionalities to manage and optimize Microsoft SQL Server databases.
 
 ## Features
 
