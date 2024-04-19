@@ -8,12 +8,9 @@ namespace MssqlToolBox.Helpers
         {
             ConsoleHelpers.WriteLineColoredMessage("===== Microsoft SQL Server Tool Box Utility =====", ConsoleColor.DarkGreen);
             Console.WriteLine("");
-            while (true)
-            {
-                GetDatabaseCredentials();
-                if (TestDatabaseCredentials())
-                    break;
-            }
+
+            GetDatabaseCredentials();
+
             MenuHandler.Handle();
         }
         private static bool TestDatabaseCredentials()
@@ -23,8 +20,6 @@ namespace MssqlToolBox.Helpers
                 if (DatabaseOperations.TestDatabaseConnection())
                 {
                     ConsoleHelpers.WriteLineColoredMessage("Connected to the database successfully.", ConsoleColor.Green);
-                    ConsoleHelpers.WriteLineColoredMessage("Please press any key to go to the menu", ConsoleColor.DarkGray);
-                    Console.ReadKey();
                     return true;
                 }
                 return false;
@@ -38,43 +33,65 @@ namespace MssqlToolBox.Helpers
 
         private static void GetDatabaseCredentials()
         {
-            if (CredentialManager.Instance.GetAvailableConnectionCount() > 0)
+            var newConnection = false;
+            while (true)
             {
-                CredentialManager.Instance.ListConnections();
+                if (CredentialManager.Instance.GetAvailableConnectionCount() > 0)
+                {
+                    CredentialManager.Instance.ListConnections();
 
-                Console.WriteLine("");
-                string choice;
-                while (true)
-                {
-                    choice = ConsoleHelpers.GetValidInput("Would you like to use an existing connection (Y) or enter new credentials (N)? ", "Please enter Y or N.");
-                    if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
-                        break;
-                }
-                if (choice.ToUpper() == "Y")
-                {
-                    int index;
+                    Console.WriteLine("");
+                    string choice;
                     while (true)
                     {
-                        var input = ConsoleHelpers.GetValidInput("Enter the number of the existing connection: ", "Invalid input. Please enter a valid number.");
-                        if (int.TryParse(input, out index) && index > 0 && index <= CredentialManager.Instance.GetAvailableConnectionCount())
-                        {
+                        choice = ConsoleHelpers.GetValidInput(
+                            "Would you like to use an existing connection (Y) or enter new credentials (N)? ",
+                            "Please enter Y or N.");
+                        if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
                             break;
-                        }
-                        ConsoleHelpers.WriteLineColoredMessage("Invalid connection number. Please enter a valid number.", ConsoleColor.Red);
                     }
 
-                    var connections = CredentialManager.Instance.GetConnections();
-                    var connection = connections[index - 1];
-                    CredentialManager.Instance.SetActiveConnection(connection);
+                    if (choice.ToUpper() == "Y")
+                    {
+                        int index;
+                        while (true)
+                        {
+                            var input = ConsoleHelpers.GetValidInput("Enter the number of the existing connection: ",
+                                "Invalid input. Please enter a valid number.");
+                            if (int.TryParse(input, out index) && index > 0 &&
+                                index <= CredentialManager.Instance.GetAvailableConnectionCount())
+                            {
+                                break;
+                            }
+
+                            ConsoleHelpers.WriteLineColoredMessage(
+                                "Invalid connection number. Please enter a valid number.", ConsoleColor.Red);
+                        }
+
+                        var connections = CredentialManager.Instance.GetConnections();
+                        var connection = connections[index - 1];
+                        CredentialManager.Instance.SetActiveConnection(connection);
+                    }
+                    else
+                    {
+                        newConnection = true;
+                        GetNewDatabaseCredentials();
+                    }
                 }
                 else
                 {
+                    newConnection = true;
                     GetNewDatabaseCredentials();
                 }
-            }
-            else
-            {
-                GetNewDatabaseCredentials();
+
+                if (TestDatabaseCredentials())
+                {
+                    if (newConnection)
+                    {
+                        ConfirmSaveDatabaseCredentials(CredentialManager.Instance.GetActiveConnection());
+                    }
+                    break;
+                }
             }
         }
 
@@ -87,6 +104,12 @@ namespace MssqlToolBox.Helpers
             var username = ConsoleHelpers.GetValidInput("Username: ", "Username cannot be empty. Please enter a valid username.");
             var password = ConsoleHelpers.ReadPassword("Password: ", "Password cannot be empty. Please enter a valid password.");
 
+            var connection = new DatabaseConnectionInfo(server, username, password);
+            CredentialManager.Instance.SetActiveConnection(connection);
+        }
+
+        private static void ConfirmSaveDatabaseCredentials(DatabaseConnectionInfo connection)
+        {
             string choice;
             while (true)
             {
@@ -95,8 +118,6 @@ namespace MssqlToolBox.Helpers
                     break;
             }
 
-            var connection = new DatabaseConnectionInfo(server, username, password);
-            CredentialManager.Instance.SetActiveConnection(connection);
             if (choice.ToUpper() == "Y")
             {
                 var defaultConnectionName = $"{connection.Server}_{connection.Username}";
@@ -104,5 +125,6 @@ namespace MssqlToolBox.Helpers
                 CredentialManager.Instance.AddConnection(connectionName, connection);
             }
         }
+
     }
 }
