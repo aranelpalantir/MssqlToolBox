@@ -1,8 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 using MssqlToolBox.Models;
-using System;
-using DriveInfo = MssqlToolBox.Models.DriveInfo;
 
 namespace MssqlToolBox.Helpers
 {
@@ -10,7 +8,7 @@ namespace MssqlToolBox.Helpers
     {
         public static bool TestDatabaseConnection()
         {
-            using var connection = new SqlConnection(Program.ConnectionString);
+            using var connection = new SqlConnection(CredentialManager.Instance.GetActiveConnection().ConnectionString);
             connection.Open();
             return true;
         }
@@ -89,7 +87,7 @@ namespace MssqlToolBox.Helpers
         {
             var recoveryModelStr = recoveryModel.ToString();
 
-            using var connection = new SqlConnection(Program.ConnectionString);
+            using var connection = new SqlConnection(CredentialManager.Instance.GetActiveConnection().ConnectionString);
             connection.Open();
 
             var sql = $"ALTER DATABASE [{databaseName}] SET RECOVERY {recoveryModelStr};";
@@ -222,7 +220,7 @@ namespace MssqlToolBox.Helpers
         }
         private static void ExecuteIndexOperation(string databaseName, string tableName, string indexName, string operation)
         {
-            using var connection = new SqlConnection(Program.ConnectionString);
+            using var connection = new SqlConnection(CredentialManager.Instance.GetActiveConnection().ConnectionString);
             connection.Open();
             connection.ChangeDatabase(databaseName);
 
@@ -261,7 +259,7 @@ namespace MssqlToolBox.Helpers
             foreach (DataRow driveInfo in driveInfos.Rows)
             {
                 serverStatusModel.DriveInfos.Add(
-                    new DriveInfo
+                    new Models.DriveInfo
                     {
                         DriveLetter = (string)driveInfo["drive"],
                         FreeSpaceMB = (int)driveInfo["MB free"]
@@ -331,7 +329,7 @@ namespace MssqlToolBox.Helpers
         {
             var dataTable = new DataTable();
 
-            using var connection = new SqlConnection(Program.ConnectionString);
+            using var connection = new SqlConnection(CredentialManager.Instance.GetActiveConnection().ConnectionString);
             connection.Open();
 
             if (dbName != null)

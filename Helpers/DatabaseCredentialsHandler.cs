@@ -1,12 +1,12 @@
-﻿namespace MssqlToolBox.Helpers
+﻿using MssqlToolBox.Models;
+
+namespace MssqlToolBox.Helpers
 {
     internal static class DatabaseCredentialsHandler
     {
         public static void Handle()
         {
             ConsoleHelpers.WriteLineColoredMessage("===== Microsoft SQL Server Tool Box Utility =====", ConsoleColor.DarkGreen);
-            Console.WriteLine("");
-            ConsoleHelpers.WriteLineColoredMessage("Please enter the database credentials:", ConsoleColor.DarkYellow);
             Console.WriteLine("");
             while (true)
             {
@@ -38,11 +38,71 @@
 
         private static void GetDatabaseCredentials()
         {
-            Program.Server = ConsoleHelpers.GetValidInput("SQL Server: ", "SQL Server name cannot be empty. Please enter a valid SQL Server name.");
+            if (CredentialManager.Instance.GetAvailableConnectionCount() > 0)
+            {
+                CredentialManager.Instance.ListConnections();
+
+                Console.WriteLine("");
+                string choice;
+                while (true)
+                {
+                    choice = ConsoleHelpers.GetValidInput("Would you like to use an existing connection (Y) or enter new credentials (N)? ", "Please enter Y or N.");
+                    if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
+                        break;
+                }
+                if (choice.ToUpper() == "Y")
+                {
+                    int index;
+                    while (true)
+                    {
+                        var input = ConsoleHelpers.GetValidInput("Enter the number of the existing connection: ", "Invalid input. Please enter a valid number.");
+                        if (int.TryParse(input, out index) && index > 0 && index <= CredentialManager.Instance.GetAvailableConnectionCount())
+                        {
+                            break;
+                        }
+                        ConsoleHelpers.WriteLineColoredMessage("Invalid connection number. Please enter a valid number.", ConsoleColor.Red);
+                    }
+
+                    var connections = CredentialManager.Instance.GetConnections();
+                    var connection = connections[index - 1];
+                    CredentialManager.Instance.SetActiveConnection(connection);
+                }
+                else
+                {
+                    GetNewDatabaseCredentials();
+                }
+            }
+            else
+            {
+                GetNewDatabaseCredentials();
+            }
+        }
+
+        private static void GetNewDatabaseCredentials()
+        {
+            ConsoleHelpers.WriteLineColoredMessage("Please enter the database credentials:", ConsoleColor.DarkYellow);
+            Console.WriteLine("");
+
+            var server = ConsoleHelpers.GetValidInput("SQL Server: ", "SQL Server name cannot be empty. Please enter a valid SQL Server name.");
             var username = ConsoleHelpers.GetValidInput("Username: ", "Username cannot be empty. Please enter a valid username.");
             var password = ConsoleHelpers.ReadPassword("Password: ", "Password cannot be empty. Please enter a valid password.");
 
-            Program.ConnectionString = $"Data Source={Program.Server};User ID={username};Password={password};TrustServerCertificate=true;";
+            string choice;
+            while (true)
+            {
+                choice = ConsoleHelpers.GetValidInput("Would you like to save this connection for future use? (Y/N): ", "Please enter Y or N.");
+                if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
+                    break;
+            }
+
+            var connection = new DatabaseConnectionInfo(server, username, password);
+            CredentialManager.Instance.SetActiveConnection(connection);
+            if (choice.ToUpper() == "Y")
+            {
+                var defaultConnectionName = $"{connection.Server}_{connection.Username}";
+                var connectionName = ConsoleHelpers.GetValidInputWithDefaultInput($"Enter a name for this connection (Default: {defaultConnectionName}): ", defaultConnectionName);
+                CredentialManager.Instance.AddConnection(connectionName, connection);
+            }
         }
     }
 }

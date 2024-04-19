@@ -17,7 +17,7 @@ This utility tool provides a set of functionalities to manage and perform variou
 - **Top 10 Queries by Avg. Elapsed Time**: Display the top 10 queries based on average elapsed time.
 - **Top 10 Active Queries by CPU Time**: Display the top 10 active queries based on CPU time.
 - **Top 10 Missing Indexes by Improvement Measure**: Display the top 10 missing indexes based on improvement measure.
-- **Exit**: Exit the application.
+- **Change SQL Server Connection**: Change the SQL Server connection by entering new database credentials or using existing ones.
 
 ## Server Status
 

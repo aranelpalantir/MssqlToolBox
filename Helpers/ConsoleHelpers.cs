@@ -18,7 +18,18 @@
 
             return input;
         }
+        public static string GetValidInputWithDefaultInput(string prompt, string defaultInput)
+        {
+            WriteColoredMessage(prompt, ConsoleColor.DarkCyan);
+            var input = Console.ReadLine();
 
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return defaultInput;
+            }
+
+            return input;
+        }
         public static string ReadPassword(string prompt, string errorMessage)
         {
             string password;

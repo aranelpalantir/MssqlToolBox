@@ -75,7 +75,7 @@ namespace MssqlToolBox.Helpers
         private static void ShowMenu()
         {
             Console.Clear();
-            ConsoleHelpers.WriteLineColoredMessage($"SQL Server: {Program.Server}", ConsoleColor.DarkCyan);
+            ConsoleHelpers.WriteLineColoredMessage($"SQL Server: {CredentialManager.Instance.GetActiveConnection().Server} User: {CredentialManager.Instance.GetActiveConnection().Username}", ConsoleColor.DarkCyan);
 
             var serverStatusModel = DatabaseOperations.GetServerStatus();
             ShowServerStatus(serverStatusModel);
