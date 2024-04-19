@@ -4,12 +4,17 @@
     {
         public static void Handle()
         {
+            ConsoleHelpers.WriteLineColoredMessage("===== Microsoft SQL Server Tool Box Utility =====", ConsoleColor.DarkGreen);
+            Console.WriteLine("");
+            ConsoleHelpers.WriteLineColoredMessage("Please enter the database credentials:", ConsoleColor.DarkYellow);
+            Console.WriteLine("");
             while (true)
             {
                 GetDatabaseCredentials();
                 if (TestDatabaseCredentials())
                     break;
             }
+            MenuHandler.Handle();
         }
         private static bool TestDatabaseCredentials()
         {
