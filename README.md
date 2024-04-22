@@ -13,10 +13,10 @@ This utility tool provides a set of functionalities to manage and optimize Micro
 - **Reorganize Indexes**: Reorganize indexes for all tables in all online databases, a specific database, or a specific table, with the option to set a fragmentation limit.
 - **Update Index Statistics**: Updates index statistics for all tables in all online databases, a specific database, or a specific table.
 - **Index Optimization**: Optimizes indexes for all tables in all online databases, a specific database, or a specific table, with the option to set a fragmentation limit.
-- **Top 10 Queries by Avg. CPU Time**: Display the top 10 queries based on average CPU time.
-- **Top 10 Queries by Avg. Elapsed Time**: Display the top 10 queries based on average elapsed time.
-- **Top 10 Active Queries by CPU Time**: Display the top 10 active queries based on CPU time.
-- **Top 10 Missing Indexes by Improvement Measure**: Display the top 10 missing indexes based on improvement measure.
+- **Top 50 Queries by Avg. CPU Time**: Display the top 50 queries based on average CPU time.
+- **Top 50 Queries by Avg. Elapsed Time**: Display the top 50 queries based on average elapsed time.
+- **Top 50 Active Queries by CPU Time**: Display the top 50 active queries based on CPU time.
+- **Top 50 Missing Indexes by Improvement Measure**: Display the top 50 missing indexes based on improvement measure.
 - **Change SQL Server Connection**: Change the SQL Server connection by entering new database credentials or using existing ones.
 
 ## Server Status

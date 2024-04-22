@@ -26,7 +26,7 @@ namespace MssqlToolBox.Operations
                 var results = DatabaseOperations.ShowTopActiveQueries(dbName);
                 if (results is { Rows.Count: > 0 })
                 {
-                    ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Top 10 Active Queries by CPU Time:", ConsoleColor.Blue);
+                    ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Top 50 Active Queries by CPU Time:", ConsoleColor.Blue);
                     foreach (DataRow row in results.Rows)
                     {
                         ConsoleHelpers.WriteLineColoredMessage($"{count}", ConsoleColor.DarkYellow);

@@ -129,7 +129,7 @@ namespace MssqlToolBox.Helpers
         }
         public static DataTable ShowTopQueries(string databaseName, ShowTopQueriesSortBy sortBy)
         {
-            var query = @"SELECT TOP 10 * FROM (SELECT query_stats.query_hash AS Query_Hash,   
+            var query = @"SELECT TOP 50 * FROM (SELECT query_stats.query_hash AS Query_Hash,   
             SUM(query_stats.total_worker_time) / SUM(query_stats.execution_count) AS Avg_CPU_Time, 
 	        SUM(query_stats.total_elapsed_time) / SUM(query_stats.execution_count) AS Avg_Elapsed_Time, 
             MIN(query_stats.statement_text) AS Sample_Statement_Text,
@@ -172,7 +172,7 @@ namespace MssqlToolBox.Helpers
         }
         public static DataTable ShowTopActiveQueries(string databaseName)
         {
-            var query = @"SELECT TOP 10 * FROM (SELECT db_name(req.database_id) db_name,
+            var query = @"SELECT TOP 50 * FROM (SELECT db_name(req.database_id) db_name,
             c.client_net_address,
             req.status,
             req.command,
@@ -275,7 +275,7 @@ namespace MssqlToolBox.Helpers
         public static List<MissingIndexModel> GetMissingIndexes(string databaseName)
         {
             var query = @"
-        SELECT TOP 10
+        SELECT TOP 50
             CONVERT(DECIMAL(28, 1), migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans)) AS Improvement_Measure,
             'CREATE INDEX missing_index_' + CONVERT(VARCHAR, mig.index_group_handle) + '_' + CONVERT(VARCHAR, mid.index_handle) + ' ON ' + mid.statement + ' (' + ISNULL(mid.equality_columns, '') + 
             CASE WHEN mid.equality_columns IS NOT NULL AND mid.inequality_columns IS NOT NULL THEN ',' ELSE '' END + ISNULL(mid.inequality_columns, '') + ')' + ISNULL(' INCLUDE (' + mid.included_columns + ')', '') AS Create_Index_Statement

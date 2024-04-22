@@ -25,7 +25,7 @@ namespace MssqlToolBox.Operations
                 var results = DatabaseOperations.GetMissingIndexes(dbName);
                 if (results is { Count: > 0 })
                 {
-                    ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Top 10 Missing Indexes by Improvement Measure:", ConsoleColor.Blue);
+                    ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Top 50 Missing Indexes by Improvement Measure:", ConsoleColor.Blue);
                     foreach (var missingIndex in results)
                     {
                         ConsoleHelpers.WriteLineColoredMessage($"{count}", ConsoleColor.DarkYellow);

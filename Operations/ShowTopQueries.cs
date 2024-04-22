@@ -26,7 +26,7 @@ namespace MssqlToolBox.Operations
                 var results = DatabaseOperations.ShowTopQueries(dbName, sortBy);
                 if (results is { Rows.Count: > 0 })
                 {
-                    ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Top 10 Queries by {sortBy}:", ConsoleColor.Blue);
+                    ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Top 50 Queries by {sortBy}:", ConsoleColor.Blue);
                     foreach (DataRow row in results.Rows)
                     {
                         ConsoleHelpers.WriteLineColoredMessage($"{count}", ConsoleColor.DarkYellow);
