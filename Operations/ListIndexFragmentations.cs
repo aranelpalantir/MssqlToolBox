@@ -51,7 +51,8 @@ namespace MssqlToolBox.Operations
                             > 30 => ConsoleColor.Red,
                             _ => ConsoleColor.Green
                         };
-                        ConsoleHelpers.WriteLineColoredMessage($"{count}. Database Name: {index.DatabaseName} => Index Name: {index.Name}, Fragmentation: {index.Fragmentation}", color);
+                        ConsoleHelpers.WriteLineColoredMessage($"{count}. Database Name: {index.DatabaseName} => Table Name: {index.TableName}," +
+                                                               $" Index Name: {index.Name}, Fragmentation: {index.Fragmentation}", color);
                         count++;
                     }
                 }
