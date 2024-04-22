@@ -270,6 +270,8 @@ namespace MssqlToolBox.Helpers
                     });
             }
 
+            serverStatusModel.IsHighMemoryUsage = IsHighMemoryUsage();
+
             return serverStatusModel;
         }
         public static List<MissingIndexModel> GetMissingIndexes(string databaseName)
@@ -310,6 +312,35 @@ namespace MssqlToolBox.Helpers
 
             return missingIndexes;
 
+        }
+
+        private static bool IsHighMemoryUsage()
+        {
+            var query =
+                @"SELECT *, CASE WHEN ([PLE_Value]-PLE_LIMIT) < 0 THEN CONVERT(Bit,1) ELSE CONVERT(Bit,0) END AS IsHighMemoryUsage
+                    FROM (
+                        SELECT [object_name],
+                               [counter_name],
+                               [cntr_value] AS [PLE_Value],
+                               (SELECT ((total_physical_memory_kb / 1024)/1024)/4*300
+                                FROM sys.dm_os_sys_memory) AS [PLE_LIMIT]
+                        FROM sys.dm_os_performance_counters
+                        WHERE [counter_name] = 'Page life expectancy'
+                    ) AS t1";
+            var result = GetDataTable(query);
+            List<HighMemoryUsageInfo> highMemoryUsages = new();
+            foreach (DataRow row in result.Rows)
+            {
+                HighMemoryUsageInfo highMemoryUsageInfo = new()
+                {
+                    PleValue = Convert.ToInt32(row["PLE_Value"]),
+                    PleLimit = Convert.ToInt32(row["PLE_LIMIT"]),
+                    IsHighMemoryUsage = Convert.ToBoolean(row["IsHighMemoryUsage"])
+                };
+                highMemoryUsages.Add(highMemoryUsageInfo);
+            }
+
+            return highMemoryUsages.Any(r=>r.IsHighMemoryUsage);
         }
 
         private static List<DatabaseModel> GetDatabases(bool online)

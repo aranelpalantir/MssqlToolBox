@@ -8,6 +8,7 @@
         public double RamUsagePercentage { get; set; }
         public DateTime SqlServerStartTime { get; set; }
         public List<DriveInfo> DriveInfos { get; set; }
+        public bool IsHighMemoryUsage { get; set; }
     }
     internal record DriveInfo
     {
