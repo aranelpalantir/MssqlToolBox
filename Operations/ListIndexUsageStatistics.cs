@@ -19,10 +19,21 @@ namespace MssqlToolBox.Operations
             else
                 databases.Add(databaseName);
 
+            var tableName = "*";
+            if (databaseName != "*")
+            {
+                tableName = ConsoleHelpers.SelectTable(databaseName);
+                if (tableName == null)
+                {
+                    ConsoleHelpers.WriteLineColoredMessage("Table selection cancelled or invalid. Operation aborted.", ConsoleColor.DarkYellow);
+                    return;
+                }
+            }
+
             foreach (var dbName in databases)
             {
                 var count = 1;
-                var results = DatabaseOperations.GetIndexUsageStatistics(dbName);
+                var results = DatabaseOperations.GetIndexUsageStatistics(dbName, tableName);
                 if (results is { Count: > 0 })
                 {
                     ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Index Usage Statistics:", ConsoleColor.Blue);

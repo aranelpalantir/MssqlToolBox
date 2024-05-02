@@ -313,7 +313,7 @@ namespace MssqlToolBox.Helpers
             return missingIndexes;
 
         }
-        public static List<IndexUsageStatisticModel> GetIndexUsageStatistics(string databaseName)
+        public static List<IndexUsageStatisticModel> GetIndexUsageStatistics(string databaseName, string tableName)
         {
             var query = @"
         SELECT 
@@ -330,11 +330,19 @@ namespace MssqlToolBox.Helpers
             sys.indexes AS i ON s.[object_id] = i.[object_id] 
                              AND s.index_id = i.index_id
         WHERE 
-            OBJECTPROPERTY(s.[object_id],'IsUserTable') = 1
-        ORDER BY 
-            s.user_seeks + s.user_scans + s.user_lookups + s.user_updates DESC;";
+            OBJECTPROPERTY(s.[object_id],'IsUserTable') = 1";
 
-            var result = GetDataTable(query, dbName: databaseName);
+            if (tableName != "*")
+                query += " AND OBJECT_NAME(s.[object_id])=@tableName";
+
+            query += " ORDER BY s.user_seeks + s.user_scans + s.user_lookups + s.user_updates DESC;";
+
+            var parametersList = new List<SqlParameter>();
+
+            if (tableName != "*")
+                parametersList.Add(new("@tableName", SqlDbType.NVarChar) { Value = tableName });
+
+            var result = GetDataTable(query, [.. parametersList], dbName: databaseName);
 
             List<IndexUsageStatisticModel> indexUsageStatistics = new();
             foreach (DataRow row in result.Rows)
