@@ -17,6 +17,7 @@ This utility tool provides a set of functionalities to manage and optimize Micro
 - **Top 50 Queries by Avg. Elapsed Time**: Display the top 50 queries based on average elapsed time.
 - **Top 50 Active Queries by CPU Time**: Display the top 50 active queries based on CPU time.
 - **Top 50 Missing Indexes by Improvement Measure**: Display the top 50 missing indexes based on improvement measure.
+- **List Index Usage Statistics**: Display index usage statistics for databases, providing insights into index effectiveness and usage patterns.
 - **Show Status Information of All Sql Servers**: Displays the status information of all SQL servers.
 - **Change SQL Server Connection**: Change the SQL Server connection by entering new database credentials or using existing ones.
 

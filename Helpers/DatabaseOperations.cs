@@ -121,7 +121,7 @@ namespace MssqlToolBox.Helpers
         {
             ExecuteIndexOperation(databaseName, tableName, indexName, "REORGANIZE");
         }
-        
+
         public enum ShowTopQueriesSortBy
         {
             CpuTime,
@@ -313,7 +313,48 @@ namespace MssqlToolBox.Helpers
             return missingIndexes;
 
         }
+        public static List<IndexUsageStatisticModel> GetIndexUsageStatistics(string databaseName)
+        {
+            var query = @"
+        SELECT 
+            OBJECT_NAME(s.[object_id]) AS TableName,
+            ISNULL(i.name,'-') AS IndexName,
+            i.type_desc AS IndexType,
+            s.user_seeks AS Seeks,
+            s.user_scans AS Scans,
+            s.user_lookups AS Lookups,
+            s.user_updates AS Updates
+        FROM 
+            sys.dm_db_index_usage_stats AS s
+        INNER JOIN 
+            sys.indexes AS i ON s.[object_id] = i.[object_id] 
+                             AND s.index_id = i.index_id
+        WHERE 
+            OBJECTPROPERTY(s.[object_id],'IsUserTable') = 1
+        ORDER BY 
+            s.user_seeks + s.user_scans + s.user_lookups + s.user_updates DESC;";
 
+            var result = GetDataTable(query, dbName: databaseName);
+
+            List<IndexUsageStatisticModel> indexUsageStatistics = new();
+            foreach (DataRow row in result.Rows)
+            {
+                IndexUsageStatisticModel indexUsageStatistic = new()
+                {
+                    TableName = (string)row["TableName"],
+                    Name = (string)row["IndexName"],
+                    IndexType = (string)row["IndexType"],
+                    Seeks = Convert.ToInt32(row["Seeks"]),
+                    Scans = Convert.ToInt32(row["Scans"]),
+                    Lookups = Convert.ToInt32(row["Lookups"]),
+                    Updates = Convert.ToInt32(row["Updates"])
+                };
+                indexUsageStatistics.Add(indexUsageStatistic);
+            }
+
+            return indexUsageStatistics;
+
+        }
         private static bool IsHighMemoryUsage()
         {
             var query =
@@ -340,7 +381,7 @@ namespace MssqlToolBox.Helpers
                 highMemoryUsages.Add(highMemoryUsageInfo);
             }
 
-            return highMemoryUsages.Any(r=>r.IsHighMemoryUsage);
+            return highMemoryUsages.Any(r => r.IsHighMemoryUsage);
         }
 
         private static List<DatabaseModel> GetDatabases(bool online)
