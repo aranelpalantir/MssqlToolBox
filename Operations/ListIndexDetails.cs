@@ -1,4 +1,6 @@
 ﻿using MssqlToolBox.Helpers;
+using System;
+using System.Drawing;
 
 namespace MssqlToolBox.Operations
 {
@@ -37,12 +39,20 @@ namespace MssqlToolBox.Operations
                 if (results is { Count: > 0 })
                 {
                     ConsoleHelpers.WriteLineColoredMessage($"Database: {dbName} Index Details:", ConsoleColor.Blue);
-                    foreach (var indexUsageStatistic in results)
+                    foreach (var indexDetail in results)
                     {
                         ConsoleHelpers.WriteLineColoredMessage($"{count}", ConsoleColor.DarkYellow);
-                        ConsoleHelpers.WriteLineColoredMessage($"Table Name: {indexUsageStatistic.TableName}, Index Name: {indexUsageStatistic.Name}, Index Type: {indexUsageStatistic.IndexType}", ConsoleColor.Yellow);
-                        ConsoleHelpers.WriteLineColoredMessage($"Columns: {indexUsageStatistic.ColumnNames}", ConsoleColor.Green);
-                        ConsoleHelpers.WriteLineColoredMessage($"Included Columns: {indexUsageStatistic.IncludedColumnNames}", ConsoleColor.Green);
+                        ConsoleHelpers.WriteLineColoredMessage($"Table Name: {indexDetail.TableName}, Index Name: {indexDetail.Name}, Index Type: {indexDetail.IndexType}", ConsoleColor.Yellow);
+                        ConsoleHelpers.WriteLineColoredMessage($"Columns: {indexDetail.ColumnNames}", ConsoleColor.Green);
+                        ConsoleHelpers.WriteLineColoredMessage($"Included Columns: {indexDetail.IncludedColumnNames}", ConsoleColor.Green);
+                        ConsoleHelpers.WriteLineColoredMessage($"Seeks: {indexDetail.Seeks} | Scans: {indexDetail.Scans} | Lookups: {indexDetail.Lookups} | Updates: {indexDetail.Updates}", ConsoleColor.Green);
+                        var fragmentationColor = indexDetail.Fragmentation switch
+                        {
+                            > 0 and <= 30 => ConsoleColor.DarkYellow,
+                            > 30 => ConsoleColor.Red,
+                            _ => ConsoleColor.Green
+                        };
+                        ConsoleHelpers.WriteLineColoredMessage($"Fragmentation: {indexDetail.Fragmentation}", fragmentationColor);
                         ConsoleHelpers.WriteLineColoredMessage("-------------", ConsoleColor.Gray);
 
                         Console.WriteLine();

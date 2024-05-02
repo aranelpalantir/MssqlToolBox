@@ -317,6 +317,7 @@ namespace MssqlToolBox.Helpers
         {
             var query = @"
         SELECT 
+            db_name(s.database_id) db_name,
             OBJECT_NAME(s.[object_id]) AS TableName,
             ISNULL(i.name,'-') AS IndexName,
             i.type_desc AS IndexType,
@@ -330,14 +331,17 @@ namespace MssqlToolBox.Helpers
             sys.indexes AS i ON s.[object_id] = i.[object_id] 
                              AND s.index_id = i.index_id
         WHERE 
-            OBJECTPROPERTY(s.[object_id],'IsUserTable') = 1";
+            OBJECTPROPERTY(s.[object_id],'IsUserTable') = 1 AND db_name(s.database_id)=@dbName";
 
             if (tableName != "*")
                 query += " AND OBJECT_NAME(s.[object_id])=@tableName";
 
             query += " ORDER BY s.user_seeks + s.user_scans + s.user_lookups + s.user_updates DESC;";
 
-            var parametersList = new List<SqlParameter>();
+            var parametersList = new List<SqlParameter>
+            {
+                new ("@dbName", SqlDbType.NVarChar) { Value = databaseName }
+            };
 
             if (tableName != "*")
                 parametersList.Add(new("@tableName", SqlDbType.NVarChar) { Value = tableName });
@@ -380,8 +384,8 @@ namespace MssqlToolBox.Helpers
             sys.columns AS c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
         WHERE 
             OBJECTPROPERTY(ix.object_id,'IsUserTable') = 1
-            AND ix.type_desc <> 'HEAP'"; 
-            
+            AND ix.type_desc <> 'HEAP'";
+
             if (tableName != "*")
                 query += " AND OBJECT_NAME(ix.object_id)=@tableName";
 
@@ -408,7 +412,21 @@ namespace MssqlToolBox.Helpers
                 };
                 indexDetailModels.Add(indexDetailModel);
             }
+            var indexFragmentations = GetIndexFragmentations(databaseName, tableName)
+                .ToDictionary(r => new { databaseName, r.TableName, r.Name });
+            var indexUsagestatistics = GetIndexUsageStatistics(databaseName, tableName)
+                .ToDictionary(r => new { databaseName, r.TableName, r.Name });
+            foreach (var indexDetailModel in indexDetailModels)
+            {
+                indexFragmentations.TryGetValue(new { databaseName, indexDetailModel.TableName, indexDetailModel.Name }, out var indexFragmentation);
+                indexDetailModel.Fragmentation = indexFragmentation?.Fragmentation;
 
+                indexUsagestatistics.TryGetValue(new { databaseName, indexDetailModel.TableName, indexDetailModel.Name }, out var indexUsageStatistic);
+                indexDetailModel.Seeks = indexUsageStatistic?.Seeks;
+                indexDetailModel.Scans = indexUsageStatistic?.Scans;
+                indexDetailModel.Lookups = indexUsageStatistic?.Lookups;
+                indexDetailModel.Updates = indexUsageStatistic?.Updates;
+            }
             return indexDetailModels;
 
         }
