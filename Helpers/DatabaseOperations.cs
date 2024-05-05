@@ -370,27 +370,31 @@ namespace MssqlToolBox.Helpers
         public static List<IndexDetailModel> GetIndexDetails(string databaseName, string tableName)
         {
             var query = @"
-        SELECT 
-            OBJECT_NAME(ix.object_id) AS TableName,
-            ix.name AS IndexName,
-	        ix.type_desc AS IndexType,
-            STRING_AGG(CASE WHEN ic.is_included_column = 0 THEN c.name END, ', ') AS ColumnNames,
-            ISNULL(STRING_AGG(CASE WHEN ic.is_included_column = 1 THEN c.name END, ', '),'-') AS IncludedColumnNames
-        FROM 
-            sys.indexes AS ix
-        INNER JOIN 
-            sys.index_columns AS ic ON ix.object_id = ic.object_id AND ix.index_id = ic.index_id
-        INNER JOIN 
-            sys.columns AS c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-        WHERE 
-            OBJECTPROPERTY(ix.object_id,'IsUserTable') = 1
-            AND ix.type_desc <> 'HEAP'";
+            SELECT 
+                OBJECT_NAME(ix.object_id) AS TableName,
+                ix.name AS IndexName,
+                ix.type_desc AS IndexType,
+                STUFF((SELECT ', ' + c.name
+                       FROM sys.index_columns AS ic
+                       INNER JOIN sys.columns AS c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                       WHERE ix.object_id = ic.object_id AND ix.index_id = ic.index_id AND ic.is_included_column = 0
+                       FOR XML PATH('')), 1, 2, '') AS ColumnNames,
+                ISNULL(STUFF((SELECT ', ' + c.name
+                              FROM sys.index_columns AS ic
+                              INNER JOIN sys.columns AS c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                              WHERE ix.object_id = ic.object_id AND ix.index_id = ic.index_id AND ic.is_included_column = 1
+                              FOR XML PATH('')), 1, 2, ''), '-') AS IncludedColumnNames
+            FROM 
+                sys.indexes AS ix
+            WHERE 
+                OBJECTPROPERTY(ix.object_id,'IsUserTable') = 1
+                AND ix.type_desc <> 'HEAP'";
 
             if (tableName != "*")
                 query += " AND OBJECT_NAME(ix.object_id)=@tableName";
 
-            query += " GROUP BY ix.object_id, ix.name, ix.type_desc";
-            query += " ORDER BY TableName, IndexName, IndexType;";
+            query += " GROUP BY ix.object_id, ix.name, ix.type_desc, ix.index_id";
+            query += " ORDER BY TableName, IndexName;";
 
             var parametersList = new List<SqlParameter>();
 
