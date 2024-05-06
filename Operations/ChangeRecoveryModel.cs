@@ -13,20 +13,24 @@ namespace MssqlToolBox.Operations
                 return;
             }
 
-            var recoveryModel = GetRecoveryModel();
+            var targetRecoveryModel = GetRecoveryModel();
 
             var databases = new List<string>();
             if (databaseName == "*")
-                databases = DatabaseOperations.GetOnlineDatabases();
+                databases = DatabaseOperations.GetOnlineDatabasesWithRecoveryModels();
             else
-                databases.Add(RemoveRecoveryModelDescription(databaseName));
+                databases.Add(databaseName);
 
-            foreach (var dbName in databases)
+            foreach (var dbNameWithRecoveryModel in databases)
             {
-                if (ConsoleHelpers.ConfirmAction($"Are you sure you want to change the recovery model of database '{dbName}' to '{recoveryModel}'? (Y/N)"))
+                var dbName = GetDbName(dbNameWithRecoveryModel);
+                var dbRecoveryModel = GetDbRecoveryModel(dbNameWithRecoveryModel);
+                if (targetRecoveryModel.Value == TransformRecoveryModel(dbRecoveryModel))
+                    continue;
+                if (ConsoleHelpers.ConfirmAction($"Are you sure you want to change the recovery model of the database '{dbName}' from '{dbRecoveryModel}' to '{targetRecoveryModel}'? (Y/N)"))
                 {
-                    DatabaseOperations.ChangeRecoveryModel(dbName, recoveryModel.Value);
-                    ConsoleHelpers.WriteLineColoredMessage($"Recovery model of database '{dbName}' has been changed to '{recoveryModel}'.", ConsoleColor.Green);
+                    DatabaseOperations.ChangeRecoveryModel(dbName, targetRecoveryModel.Value);
+                    ConsoleHelpers.WriteLineColoredMessage($"Recovery model of database '{dbName}' has been changed from '{dbRecoveryModel}' to '{targetRecoveryModel}'.", ConsoleColor.Green);
                 }
                 else
                 {
@@ -35,9 +39,27 @@ namespace MssqlToolBox.Operations
             }
         }
 
-        private static string RemoveRecoveryModelDescription(string databaseName)
+        private static string GetDbName(string dbNameWithRecoveryModel)
         {
-            return databaseName.Split("=>")[0].Trim();
+            return dbNameWithRecoveryModel.Split("=>")[0].Trim();
+        }
+        private static string GetDbRecoveryModel(string dbNameWithRecoveryModel)
+        {
+            return dbNameWithRecoveryModel.Split("=>")[1].Trim();
+        }
+        private static DatabaseOperations.RecoveryModel TransformRecoveryModel(string dbRecoveryModel)
+        {
+            switch (dbRecoveryModel)
+            {
+                case "SIMPLE":
+                    return DatabaseOperations.RecoveryModel.Simple;
+                case "FULL":
+                    return DatabaseOperations.RecoveryModel.Full;
+                case "BULK_LOGGED":
+                    return DatabaseOperations.RecoveryModel.BULK_LOGGED;
+                default:
+                    throw new Exception("Invalid Db Recovery Model.");
+            }
         }
         private static DatabaseOperations.RecoveryModel? GetRecoveryModel()
         {
