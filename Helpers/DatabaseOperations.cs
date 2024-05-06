@@ -456,6 +456,7 @@ namespace MssqlToolBox.Helpers
             var sql = $"DBCC SHRINKDATABASE (N'{databaseName}');";
 
             using var command = new SqlCommand(sql, connection);
+            command.CommandTimeout = 600;
             command.ExecuteNonQuery();
         }
         private static bool IsHighMemoryUsage()
