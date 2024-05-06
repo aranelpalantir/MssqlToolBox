@@ -48,6 +48,7 @@ namespace MssqlToolBox.Helpers
             { "13", new MenuOption("Top 50 Missing Indexes by Improvement Measure", _ => ListMissingIndexes.Execute()) },
             { "14", new MenuOption("List Index Usage Statistics", _ => ListIndexUsageStatistics.Execute()) },
             { "15", new MenuOption("List Index Details", _ => ListIndexDetails.Execute()) },
+            { "16", new MenuOption("Shrink Database", _ => ShrinkDatabase.Execute()) },
             { "s", new MenuOption(" Show Status Information of All Sql Servers", _ => SqlServerInformation.ShowSummaryAllConnections()) },
             { "c", new MenuOption(" Change Sql Server Connection", _ =>  DatabaseCredentialsHandler.Handle()) },
             { "q", new MenuOption(" Exit", _ => Environment.Exit(0)) }

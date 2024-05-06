@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 using MssqlToolBox.Models;
+using Azure;
 
 namespace MssqlToolBox.Helpers
 {
@@ -433,6 +434,29 @@ namespace MssqlToolBox.Helpers
             }
             return indexDetailModels;
 
+        }
+        public static List<DatabaseFileModel> GetDatabaseFilesDetails(string databaseName)
+        {
+            var query = $"SELECT name AS DatabaseName, size * 8 / 1024.0 AS DatabaseSizeMB FROM  sys.master_files WHERE database_id = DB_ID(N'{databaseName}');";
+            var result = GetDataTable(query);
+
+            return (from DataRow row in result.Rows
+                select new DatabaseFileModel
+                {
+                    Name = row["DatabaseName"].ToString(),
+                    Size = (decimal)row["DatabaseSizeMB"]
+                }).ToList();
+        }
+
+        public static void ShrinkDatabase(string databaseName)
+        {
+            using var connection = new SqlConnection(CredentialManager.Instance.GetActiveConnection().ConnectionString);
+            connection.Open();
+
+            var sql = $"DBCC SHRINKDATABASE (N'{databaseName}');";
+
+            using var command = new SqlCommand(sql, connection);
+            command.ExecuteNonQuery();
         }
         private static bool IsHighMemoryUsage()
         {
