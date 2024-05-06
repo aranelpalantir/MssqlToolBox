@@ -63,11 +63,19 @@ namespace MssqlToolBox.Helpers
             ConsoleHelpers.WriteLineColoredMessage("-----------------------------------------------------------------------------------------------------------------------", ConsoleColor.Gray);
             ConsoleHelpers.WriteLineColoredMessage("Menu:", ConsoleColor.DarkYellow);
             ConsoleHelpers.WriteLineColoredMessage("-------------", ConsoleColor.Gray);
-            foreach (var option in MenuOptions)
+
+            var columnWidth = 50;
+            var halfCount = (int)Math.Ceiling((double)MenuOptions.Count / 2);
+            for (var i = 0; i < halfCount; i++)
             {
-                ConsoleHelpers.WriteLineColoredMessage($"{option.Key}- {option.Value.Description}", ConsoleColor.Yellow);
+                var firstOption = MenuOptions.ElementAt(i);
+                var secondOption = MenuOptions.ElementAtOrDefault(i + halfCount);
+                var firstLine = $"[{firstOption.Key}] {firstOption.Value.Description}".PadRight(columnWidth);
+                var secondLine = secondOption.Key != null ? $"[{secondOption.Key}] {secondOption.Value.Description}" : string.Empty;
+                ConsoleHelpers.WriteLineColoredMessage($"{firstLine}{secondLine}", ConsoleColor.Yellow);
             }
-            ConsoleHelpers.WriteLineColoredMessage("-------------", ConsoleColor.Gray);
+            
+            ConsoleHelpers.WriteLineColoredMessage("\n-------------", ConsoleColor.Gray);
         }
        
         private static void ExecuteMenuOption(string choice, object parameter = null)
