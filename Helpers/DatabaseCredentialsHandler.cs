@@ -64,9 +64,9 @@ namespace MssqlToolBox.Helpers
                     while (true)
                     {
                         choice = ConsoleHelpers.GetValidInput(
-                            "Would you like to use an existing connection (Y) or enter new credentials (N)?: ",
-                            "Please enter Y or N.");
-                        if (choice.ToUpper() == "Y" || choice.ToUpper() == "N")
+                            "Would you like to use an existing connection (Y), enter new credentials (N), or remove credentials (R): ",
+                            "Please enter Y, N or R.");
+                        if (choice.ToUpper() == "Y" || choice.ToUpper() == "N" || choice.ToUpper() == "R")
                             break;
                     }
 
@@ -90,6 +90,28 @@ namespace MssqlToolBox.Helpers
                         var connections = CredentialManager.Instance.GetConnections();
                         var connection = connections[index - 1];
                         CredentialManager.Instance.SetActiveConnection(connection);
+                    }
+                    else if (choice.ToUpper() == "R")
+                    {
+                        int index;
+                        while (true)
+                        {
+                            var input = ConsoleHelpers.GetValidInput("Enter the number of the existing connection to remove: ",
+                                "Invalid input. Please enter a valid number.");
+                            if (int.TryParse(input, out index) && index > 0 &&
+                                index <= CredentialManager.Instance.GetAvailableConnectionCount())
+                            {
+                                break;
+                            }
+
+                            ConsoleHelpers.WriteLineColoredMessage(
+                                "Invalid connection number. Please enter a valid number.", ConsoleColor.Red);
+                        }
+
+                        var connections = CredentialManager.Instance.GetConnections();
+                        var connection = connections[index - 1];
+                        CredentialManager.Instance.RemoveConnection(connection);
+                        GetDatabaseCredentials();
                     }
                     else
                     {

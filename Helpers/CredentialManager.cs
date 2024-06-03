@@ -44,6 +44,16 @@ namespace MssqlToolBox.Helpers
                     SaveConnectionsToFile();
             }
         }
+        public void RemoveConnection(DatabaseConnectionInfo connection)
+        {
+            lock (Lock)
+            {
+                var key=_connections.Single(r=>r.Value==connection).Key;
+                _connections.Remove(key);
+                if (IsSetMasterKey())
+                    SaveConnectionsToFile();
+            }
+        }
 
         public int GetAvailableConnectionCount()
         {
